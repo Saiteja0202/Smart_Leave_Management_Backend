@@ -1,6 +1,7 @@
 package com.smartleavemanagement.service;
 
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -11,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.enums.OtpStatus;
+import com.smartleavemanagement.model.RegistrationHistory;
 import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.model.Users;
+import com.smartleavemanagement.repository.RegistrationHistoryRepository;
 import com.smartleavemanagement.repository.RolesRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
@@ -27,19 +30,23 @@ public class UsersServiceImplementation implements UsersService {
 	private final RolesRepository rolesRepository;
 
 	private final JavaMailSender mailSender;
+	
+	private final RegistrationHistoryRepository registrationHistoryRepository;
 
     public UsersServiceImplementation(
         UsersRepository usersRepository,
         PasswordEncoder passwordEncoder,
         JwtUtil jwtUtil,
         RolesRepository rolesRepository,
-        JavaMailSender mailSender
+        JavaMailSender mailSender,
+        RegistrationHistoryRepository registrationHistoryRepository
     ) {
         this.usersRepository = usersRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.rolesRepository = rolesRepository;
         this.mailSender = mailSender;
+        this.registrationHistoryRepository=registrationHistoryRepository;
     }
 
 	@Override
@@ -62,15 +69,27 @@ public class UsersServiceImplementation implements UsersService {
 		user.setOtp(0);
 		user.setOtpStatus(OtpStatus.GENERATE);
 
-		if (user.getRole() == null) {
-			Roles defaultRole = rolesRepository.findById(1).orElse(null);
-			if (defaultRole == null) {
-				return ResponseEntity.status(500).body("Default role not found");
-			}
-			user.setRole(defaultRole);
-		}
+		Roles assignedRole = user.getRole();
+	    if (assignedRole == null || assignedRole.getRoleName() == null) {
+	        assignedRole = rolesRepository.findByRoleNameIgnoreCase("TEAM_MEMBER").orElse(null);
+	        if (assignedRole == null) {
+	            return ResponseEntity.status(500).body("Default role not found");
+	        }
+	    }
+		user.setRole(assignedRole); 
+	    user.setUserRole(assignedRole.getRoleName());
 
 		usersRepository.save(user);
+		RegistrationHistory registrationHistory = new RegistrationHistory();
+		registrationHistory.setFirstName(user.getFirstName());
+		registrationHistory.setLastName(user.getLastName());
+		registrationHistory.setEmail(user.getEmail());
+		registrationHistory.setUserId(user.getUserId());
+		registrationHistory.setRegisterDate(LocalDateTime.now());
+		registrationHistory.setRole(user.getUserRole());
+		
+		registrationHistoryRepository.save(registrationHistory);
+				
 		return ResponseEntity.ok("User registered successfully");
 	}
 
@@ -111,7 +130,8 @@ public class UsersServiceImplementation implements UsersService {
 			return ResponseEntity.status(403).body("You are not authorized to update this user's details");
 		}
 
-		existingUser.setFullName(updatedUser.getFullName());
+		existingUser.setFirstName(updatedUser.getFirstName());
+		existingUser.setLastName(updatedUser.getLastName());
 		existingUser.setEmail(updatedUser.getEmail());
 		existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
 		existingUser.setAddress(updatedUser.getAddress());
@@ -138,7 +158,7 @@ public class UsersServiceImplementation implements UsersService {
 	    SimpleMailMessage message = new SimpleMailMessage();
 	    message.setTo(user.getEmail());
 	    message.setSubject("Your OTP for " + context + " recovery");
-	    message.setText("Dear " + user.getFullName() + ",\n\nYour OTP is: " + otp + "\n\nRegards,\nSmart Leave Management Team");
+	    message.setText("Dear " + user.getFirstName()+" "+user.getLastName()+ ",\n\nYour OTP is: " + otp + "\n\nRegards,\nSmart Leave Management Team");
 
 	    mailSender.send(message);
 

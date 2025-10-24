@@ -1,17 +1,29 @@
 package com.smartleavemanagement.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import com.smartleavemanagement.enums.Gender;
-import com.smartleavemanagement.enums.OtpStatus;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "users")
-public class Users {
+@Table(name = "admins")
+public class Admins {
+	
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int userId;
+    private int adminId;
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -42,42 +54,25 @@ public class Users {
     @NotBlank(message = "Password is required")
     private String password;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Roles role;
-    
-    private String userRole;
-    
-    
+    @NotBlank(message = "Role is Required")
+    private String role;
 
-    public String getUserRole() {
-		return userRole;
+	public Admins() {
+		super();
+		// TODO Auto-generated constructor stub
 	}
 
-	public void setUserRole(String userRole) {
-		this.userRole = role.getRoleName();
-	}
-
-
-	private int otp;
-
-    @Enumerated(EnumType.STRING)
-    private OtpStatus otpStatus = OtpStatus.GENERATE;
-
-    public Users() {
-        this.role = new Roles();
-    }
-
-	public Users(int userId, @NotBlank(message = "First name is required") String firstName,
+	public Admins(int adminId, @NotBlank(message = "First name is required") String firstName,
 			@NotBlank(message = "Last name is required") String lastName,
 			@Email(message = "Email should be valid") @NotBlank(message = "Email is required") String email,
 			@NotNull(message = "Phone number is required") @Min(value = 1000000000, message = "Phone number must be at least 10 digits") Long phoneNumber,
 			@NotBlank(message = "Address is required") String address,
 			@NotNull(message = "Gender is required") Gender gender,
 			@NotBlank(message = "Username is required") String userName,
-			@NotBlank(message = "Password is required") String password) {
+			@NotBlank(message = "Password is required") String password,
+			@NotBlank(message = "Role is Required") String role) {
 		super();
-		this.userId = userId;
+		this.adminId = adminId;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
@@ -86,15 +81,15 @@ public class Users {
 		this.gender = gender;
 		this.userName = userName;
 		this.password = password;
-		
+		this.role = role;
 	}
 
-	public int getUserId() {
-		return userId;
+	public int getAdminId() {
+		return adminId;
 	}
 
-	public void setUserId(int userId) {
-		this.userId = userId;
+	public void setAdminId(int adminId) {
+		this.adminId = adminId;
 	}
 
 	public String getFirstName() {
@@ -161,35 +156,16 @@ public class Users {
 		this.password = password;
 	}
 
-	public Roles getRole() {
+	public String getRole() {
 		return role;
 	}
 
-	public void setRole(Roles role) {
+	public void setRole(String role) {
 		this.role = role;
 	}
 
-	public int getOtp() {
-		return otp;
-	}
-
-	public void setOtp(int otp) {
-		this.otp = otp;
-	}
-
-	public OtpStatus getOtpStatus() {
-		return otpStatus;
-	}
-
-	public void setOtpStatus(OtpStatus otpStatus) {
-		this.otpStatus = otpStatus;
-	}
-	
-	
-	@Override
-    public String toString()
-    {
-    	return role.getRoleName();
-    }
+    
+    
+    
 
 }
