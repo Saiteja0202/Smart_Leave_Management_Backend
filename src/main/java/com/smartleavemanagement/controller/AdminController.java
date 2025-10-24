@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartleavemanagement.DTOs.LoginDetails;
-import com.smartleavemanagement.model.Users;
+import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.service.AdminService;
 
 @RestController
@@ -25,8 +25,8 @@ public class AdminController {
 
 	 
 	 @PostMapping("/registration")
-	    public ResponseEntity<String> registerAdmin(@RequestBody Users user) {
-	        return adminService.registerAdmin(user);
+	    public ResponseEntity<String> registerAdmin(@RequestBody Admins admins) {
+	        return adminService.registerAdmin(admins);
 	    }
 	 
 	 @PostMapping("/login")
