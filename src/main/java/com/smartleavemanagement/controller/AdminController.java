@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.model.Admins;
+import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.service.AdminService;
 
 @RestController
@@ -34,6 +35,12 @@ public class AdminController {
 	     return adminService.login(loginDetails.getUserName(), loginDetails.getPassword());
 	 }
 
+	 
+	 @PostMapping("/add-newrole")
+	 public ResponseEntity<String> addNewRole(@RequestBody Roles roles)
+	 {
+		 return adminService.addNewRole(roles.getRoleName(),roles.getDescription());
+	 }
 	 
 	
 

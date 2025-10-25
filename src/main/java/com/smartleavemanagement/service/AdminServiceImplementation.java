@@ -10,15 +10,17 @@ import org.springframework.stereotype.Service;
 import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.RegistrationHistory;
+import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.repository.AdminsRepository;
 import com.smartleavemanagement.repository.RegistrationHistoryRepository;
+import com.smartleavemanagement.repository.RolesRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
-
-
 
 
 @Service
 public class AdminServiceImplementation implements AdminService{
+
+    private final RolesRepository rolesRepository;
 
 	private final AdminsRepository adminsRepository;
 	
@@ -33,12 +35,14 @@ public class AdminServiceImplementation implements AdminService{
 	private PasswordEncoder passwordEncoder;
 	
 	public AdminServiceImplementation(AdminsRepository adminsRepository,JwtUtil jwtUtil,
-			RegistrationHistoryRepository registrationHistoryRepository)
+			RegistrationHistoryRepository registrationHistoryRepository, RolesRepository rolesRepository)
 	{
 		this.adminsRepository=adminsRepository;
 		this.jwtUtil=jwtUtil;
 		
 		this.registrationHistoryRepository=registrationHistoryRepository;
+		
+		this.rolesRepository = rolesRepository;
 	}
 	
 	@Override
@@ -56,6 +60,8 @@ public class AdminServiceImplementation implements AdminService{
 	    admins.setPassword(passwordEncoder.encode(admins.getPassword()));
 	    admins.setRole("ADMIN");
 	    adminsRepository.save(admins);
+	    
+	    
 	    RegistrationHistory registrationHistory = new RegistrationHistory();
 		registrationHistory.setFirstName(admins.getFirstName());
 		registrationHistory.setLastName(admins.getLastName());
@@ -64,6 +70,14 @@ public class AdminServiceImplementation implements AdminService{
 		registrationHistory.setRegisterDate(LocalDateTime.now());
 		registrationHistory.setRole(admins.getRole());
 		registrationHistoryRepository.save(registrationHistory);
+		
+		
+		Roles newRole = new Roles();
+		newRole.setRoleName("ADMIN");
+		newRole.setDescription("All-access system administrator with full control");
+		rolesRepository.save(newRole);
+		
+		
 	    return ResponseEntity.ok("Admin registered successfully");
 	}
 
@@ -95,6 +109,20 @@ public class AdminServiceImplementation implements AdminService{
 
 	    return ResponseEntity.ok(response);
 	
+	}
+	
+	
+	@Override
+	public ResponseEntity<String> addNewRole(String newRole,String description)
+	{
+		
+		Roles newRoles = new Roles();
+		
+		newRoles.setRoleName(newRole);
+		newRoles.setDescription(description);
+		rolesRepository.save(newRoles);
+		
+		return ResponseEntity.ok("New Role Added Successfully");
 	}
 
 

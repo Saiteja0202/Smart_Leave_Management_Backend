@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "roles")
@@ -15,8 +16,13 @@ public class Roles {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int roleId;
 	
+	
+	
+	@NotBlank(message="Role name is required")
 	private String roleName;
 	
+	
+	@NotBlank(message = "Role description is required")
 	private String description;
 
 	public Roles(int roleId, String roleName, String description) {
