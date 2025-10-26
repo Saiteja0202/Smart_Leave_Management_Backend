@@ -2,6 +2,8 @@ package com.smartleavemanagement.service;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -10,13 +12,20 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.enums.OtpStatus;
+import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.RegistrationHistory;
+import com.smartleavemanagement.model.RoleBasedLeaves;
 import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.model.Users;
+import com.smartleavemanagement.model.UsersLeaveBalance;
+import com.smartleavemanagement.repository.CountryCalendarsRepository;
 import com.smartleavemanagement.repository.RegistrationHistoryRepository;
+import com.smartleavemanagement.repository.RoleBasedLeavesRepository;
 import com.smartleavemanagement.repository.RolesRepository;
+import com.smartleavemanagement.repository.UsersLeaveBalanceRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
 
@@ -32,14 +41,24 @@ public class UsersServiceImplementation implements UsersService {
 	private final JavaMailSender mailSender;
 	
 	private final RegistrationHistoryRepository registrationHistoryRepository;
-
+	
+	private final CountryCalendarsRepository countryCalendarsRepository;
+	
+	
+	private final UsersLeaveBalanceRepository usersLeaveBalanceRepository;
+ 
+	private final RoleBasedLeavesRepository roleBasedLeavesRepository;
+	
     public UsersServiceImplementation(
         UsersRepository usersRepository,
         PasswordEncoder passwordEncoder,
         JwtUtil jwtUtil,
         RolesRepository rolesRepository,
         JavaMailSender mailSender,
-        RegistrationHistoryRepository registrationHistoryRepository
+        RegistrationHistoryRepository registrationHistoryRepository,
+        CountryCalendarsRepository countryCalendarsRepository,
+        UsersLeaveBalanceRepository usersLeaveBalanceRepository,
+        RoleBasedLeavesRepository roleBasedLeavesRepository
     ) {
         this.usersRepository = usersRepository;
         this.passwordEncoder = passwordEncoder;
@@ -47,7 +66,12 @@ public class UsersServiceImplementation implements UsersService {
         this.rolesRepository = rolesRepository;
         this.mailSender = mailSender;
         this.registrationHistoryRepository=registrationHistoryRepository;
+        this.countryCalendarsRepository=countryCalendarsRepository;
+        this.usersLeaveBalanceRepository=usersLeaveBalanceRepository;
+        this.roleBasedLeavesRepository=roleBasedLeavesRepository;
     }
+    
+  
 
 	@Override
 	public ResponseEntity<String> registerUser(Users user) {
@@ -64,6 +88,8 @@ public class UsersServiceImplementation implements UsersService {
 		if (usersRepository.existsByEmail(user.getEmail())) {
 			return ResponseEntity.badRequest().body("Email already exists");
 		}
+		
+		
 
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setOtp(0);
@@ -76,6 +102,18 @@ public class UsersServiceImplementation implements UsersService {
 	            return ResponseEntity.status(500).body("Default role not found");
 	        }
 	    }
+	    
+	    List<CountryCalendars> calendars = countryCalendarsRepository.findByCountryName(user.getCountryName());
+
+	    if (calendars.isEmpty()) {
+	        return ResponseEntity.status(500).body("Country calendar not found");
+	    }
+
+	    CountryCalendars assignedCountryCalendar = calendars.get(0);
+	    user.setCountryName(assignedCountryCalendar.getCountryName());
+
+
+	    
 		user.setRole(assignedRole); 
 	    user.setUserRole(assignedRole.getRoleName());
 
@@ -89,6 +127,8 @@ public class UsersServiceImplementation implements UsersService {
 		registrationHistory.setRole(user.getUserRole());
 		
 		registrationHistoryRepository.save(registrationHistory);
+		
+		addRoleBasedLeavesToUsers(user.getUserId(),user.getUserRole());
 				
 		return ResponseEntity.ok("User registered successfully");
 	}
@@ -216,6 +256,65 @@ public class UsersServiceImplementation implements UsersService {
 	    usersRepository.save(user);
 
 	    return ResponseEntity.ok("Password updated successfully");
+	}
+
+	public ResponseEntity<List<HolidayCalendar>> getHolidays(int userId) {
+	    Users user = usersRepository.findById(userId).orElse(null);
+	    if (user == null) {
+	        return ResponseEntity.status(404).body(null);
+	    }
+
+	    List<CountryCalendars> countryCalendarsList = countryCalendarsRepository.findAllByCountryName(user.getCountryName());
+
+	    List<HolidayCalendar> holidaysCalendar = new ArrayList<>();
+
+	    for (CountryCalendars cc : countryCalendarsList) {
+	        HolidayCalendar holidayCalendar = new HolidayCalendar();
+	        holidayCalendar.setCountryName(cc.getCountryName());
+	        holidayCalendar.setHolidayName(cc.getHolidayName());
+	        holidayCalendar.setHolidayDate(cc.getHolidayDate());
+	        holidayCalendar.setHoilydayDay(cc.getHolidayDay());
+	        holidaysCalendar.add(holidayCalendar);
+	    }
+
+	    return ResponseEntity.ok(holidaysCalendar);
+	}
+	
+	public String addRoleBasedLeavesToUsers(int userId,String roleName)
+	{
+		RoleBasedLeaves roleBasedLeaves = roleBasedLeavesRepository.findByRole(roleName).orElse(null);
+		
+		Roles role = rolesRepository.findByRoleNameIgnoreCase(roleName).orElse(null);
+	    if (role == null) {
+	        return "Role not found";
+	    }
+			
+	    
+	    	Users usersWithRole = usersRepository.findById(userId).orElse(null);
+
+	    
+	    	UsersLeaveBalance balance = new UsersLeaveBalance();
+	    	
+	    	
+	        balance.setUser(usersWithRole); 
+	        balance.setRole(role.getRoleName());
+	        balance.setCasualLeave(roleBasedLeaves.getCasualLeave());
+	        balance.setEarnedLeave(roleBasedLeaves.getEarnedLeave());
+	        balance.setLossOfPay(roleBasedLeaves.getLossOfPay());
+	        balance.setMaternityLeave(roleBasedLeaves.getMaternityLeave());
+	        balance.setPaternityLeave(roleBasedLeaves.getPaternityLeave());
+	        balance.setSickLeave(roleBasedLeaves.getSickLeave());
+	        float totalLeaves = roleBasedLeaves.getSickLeave() + roleBasedLeaves.getCasualLeave() +
+                    roleBasedLeaves.getEarnedLeave() + roleBasedLeaves.getLossOfPay() +
+                    roleBasedLeaves.getMaternityLeave() + roleBasedLeaves.getPaternityLeave();
+	        
+	        balance.setTotalLeaves(totalLeaves);
+
+	        usersLeaveBalanceRepository.save(balance);
+	        
+	    
+	    return "Successfully added leaves to user";
+
 	}
 
 

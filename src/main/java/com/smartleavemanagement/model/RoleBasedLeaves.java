@@ -1,0 +1,142 @@
+package com.smartleavemanagement.model;
+
+
+import jakarta.persistence.Entity;
+
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+
+
+@Entity
+@Table(name="role_based_leaves")
+public class RoleBasedLeaves {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private int roleBasedLeaveId;
+	
+	
+	@NotBlank(message = "Role is required")
+	private String role;
+	
+	
+	@NotNull(message ="Required")
+	private float sickLeave;
+	
+	@NotNull(message ="Required")
+	private float earnedLeave;
+	
+	@NotNull(message ="Required")
+	private float casualLeave;
+	
+	@NotNull(message ="Required")
+	private float paternityLeave;
+	
+	@NotNull(message ="Required")
+	private float maternityLeave;
+	
+	@NotNull(message ="Required")
+	private float lossOfPay = 0;
+	
+	private float totalLeaves;
+
+	public int getRoleBasedLeaveId() {
+		return roleBasedLeaveId;
+	}
+
+	public void setRoleBasedLeaveId(int roleBasedLeaveId) {
+		this.roleBasedLeaveId = roleBasedLeaveId;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public float getSickLeave() {
+		return sickLeave;
+	}
+
+	public void setSickLeave(float sickLeave) {
+		this.sickLeave = sickLeave;
+	}
+
+	public float getEarnedLeave() {
+		return earnedLeave;
+	}
+
+	public void setEarnedLeave(float earnedLeave) {
+		this.earnedLeave = earnedLeave;
+	}
+
+	public float getCasualLeave() {
+		return casualLeave;
+	}
+
+	public void setCasualLeave(float casualLeave) {
+		this.casualLeave = casualLeave;
+	}
+
+	public float getPaternityLeave() {
+		return paternityLeave;
+	}
+
+	public void setPaternityLeave(float paternityLeave) {
+		this.paternityLeave = paternityLeave;
+	}
+
+	public float getMaternityLeave() {
+		return maternityLeave;
+	}
+
+	public void setMaternityLeave(float maternityLeave) {
+		this.maternityLeave = maternityLeave;
+	}
+
+	public float getLossOfPay() {
+		return lossOfPay;
+	}
+
+	public void setLossOfPay(float lossOfPay) {
+		this.lossOfPay = lossOfPay;
+	}
+
+	public float getTotalLeaves() {
+		return totalLeaves;
+	}
+
+	public void setTotalLeaves(float totalLeaves) {
+		this.totalLeaves = totalLeaves;
+	}
+
+	public RoleBasedLeaves(int roleBasedLeaveId, @NotBlank(message = "Role is required") String role,
+			@NotNull(message = "Required") float sickLeave, @NotNull(message = "Required") float earnedLeave,
+			@NotNull(message = "Required") float casualLeave, @NotNull(message = "Required") float paternityLeave,
+			@NotNull(message = "Required") float maternityLeave, @NotNull(message = "Required") float lossOfPay) {
+		super();
+		this.roleBasedLeaveId = roleBasedLeaveId;
+		this.role = role;
+		this.sickLeave = sickLeave;
+		this.earnedLeave = earnedLeave;
+		this.casualLeave = casualLeave;
+		this.paternityLeave = paternityLeave;
+		this.maternityLeave = maternityLeave;
+		this.lossOfPay = lossOfPay;
+	}
+
+	public RoleBasedLeaves() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	
+
+}

@@ -1,13 +1,17 @@
 package com.smartleavemanagement.controller;
 
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.model.Users;
+import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.service.UsersService;
 
 @RestController
@@ -15,14 +19,19 @@ import com.smartleavemanagement.service.UsersService;
 public class UsersController {
 
     private final UsersService usersService;
+    
+    private final UsersRepository usersRepository;
 
     
-    public UsersController(UsersService usersService) {
+    public UsersController(UsersService usersService,UsersRepository usersRepository) {
         this.usersService = usersService;
+        this.usersRepository=usersRepository;
     }
 
     @PostMapping("/registration")
     public ResponseEntity<String> registerUser(@RequestBody Users user) {
+
+
         return usersService.registerUser(user);
     }
 
@@ -76,6 +85,18 @@ public class UsersController {
 
         return usersService.updatePassword(userId, oldPassword, newPassword, token);
     }
+    
+    
+    @GetMapping("/get-user-details/{userId}")
+    public Optional<Users> getUserDetails(@PathVariable int userId)
+    {
+    	return usersRepository.findById(userId);
+    }
 
-
+    @GetMapping("/get-holidays/{userId}")
+    public ResponseEntity<List<HolidayCalendar>> getHolidays(@PathVariable int userId)
+    {
+    	return usersService.getHolidays(userId);
+    }
+    
 }
