@@ -1,7 +1,11 @@
 package com.smartleavemanagement.service;
 
 
+import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.model.Users;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 
 public interface UsersService {
@@ -12,5 +16,5 @@ public interface UsersService {
     ResponseEntity<String> generateOtp(String email, String context);
     ResponseEntity<String> verifyOtp(int otp, String context);
     ResponseEntity<String> updatePassword(int userId, String oldPassword, String newPassword, String token);
-
+    ResponseEntity<List<HolidayCalendar>> getHolidays(int userId);
 }

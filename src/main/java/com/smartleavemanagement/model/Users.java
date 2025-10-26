@@ -63,10 +63,31 @@ public class Users {
 
     @Enumerated(EnumType.STRING)
     private OtpStatus otpStatus = OtpStatus.GENERATE;
+    
+  
+    
+    
+    @NotBlank(message="Country name is required")
+    private String countryName;
 
-    public Users() {
+    
+
+	
+	public String getCountryName() {
+		return countryName;
+	}
+
+	public void setCountryName(String countryName) {
+		this.countryName = countryName;
+	}
+
+	public Users() {
         this.role = new Roles();
+        
     }
+    
+    
+    
 
 	public Users(int userId, @NotBlank(message = "First name is required") String firstName,
 			@NotBlank(message = "Last name is required") String lastName,
@@ -75,7 +96,8 @@ public class Users {
 			@NotBlank(message = "Address is required") String address,
 			@NotNull(message = "Gender is required") Gender gender,
 			@NotBlank(message = "Username is required") String userName,
-			@NotBlank(message = "Password is required") String password) {
+			@NotBlank(message = "Password is required") String password,
+			@NotBlank(message = "Country name is required") String countryName) {
 		super();
 		this.userId = userId;
 		this.firstName = firstName;
@@ -86,6 +108,7 @@ public class Users {
 		this.gender = gender;
 		this.userName = userName;
 		this.password = password;
+		this.countryName=countryName;
 		
 	}
 

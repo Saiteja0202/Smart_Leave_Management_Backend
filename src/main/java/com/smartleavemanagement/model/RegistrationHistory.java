@@ -1,9 +1,7 @@
 package com.smartleavemanagement.model;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

@@ -1,9 +1,11 @@
 package com.smartleavemanagement.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.Users;
 
 public interface UsersRepository extends JpaRepository<Users, Integer> {
@@ -13,6 +15,7 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
 	boolean existsByEmail(String email);
 	Optional<Users> findByEmail(String email);
 	Optional<Users> findByOtp(int otp);
-
+	Optional<Users> findById(int userId);
+	Optional<Users> findByRole_RoleNameIgnoreCase(String roleName);
 	
 }

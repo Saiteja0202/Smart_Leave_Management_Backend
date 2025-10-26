@@ -45,7 +45,7 @@ public class SecurityConfig {
         http.csrf(cs -> cs.disable())
             .cors(withDefaults())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/users/registration", "/admin/registration", "/users/login","/admin/login").permitAll()
+                .requestMatchers("/users/registration", "/admin/registration", "/users/login","/admin/login","/swagger-ui/**","/v3/api-docs/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/employee/**").hasRole("EMPLOYEE")
@@ -67,7 +67,7 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean
+    @Bean	
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil);
     }
