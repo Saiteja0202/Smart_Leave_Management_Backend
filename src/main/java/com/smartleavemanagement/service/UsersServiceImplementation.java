@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginResponse;
+import com.smartleavemanagement.DTOs.UserLeaveBalancedays;
 import com.smartleavemanagement.enums.OtpStatus;
 import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.RegistrationHistory;
@@ -315,6 +316,28 @@ public class UsersServiceImplementation implements UsersService {
 	    
 	    return "Successfully added leaves to user";
 
+	}
+	
+	
+	public ResponseEntity<List<UserLeaveBalancedays>> getUserLeaveBalance(int userId)
+	{
+		
+		UsersLeaveBalance userLeaveBalance = usersLeaveBalanceRepository.findByUser_UserId(userId);
+		
+		
+		UserLeaveBalancedays userLeaveBalanceDays = new UserLeaveBalancedays();
+		userLeaveBalanceDays.setCasualLeave(userLeaveBalance.getCasualLeave());
+		userLeaveBalanceDays.setEarnedLeave(userLeaveBalance.getEarnedLeave());
+		userLeaveBalanceDays.setLossOfPay(userLeaveBalance.getLossOfPay());
+		userLeaveBalanceDays.setMaternityLeave(userLeaveBalance.getMaternityLeave());
+		userLeaveBalanceDays.setPaternityLeave(userLeaveBalance.getPaternityLeave());
+		userLeaveBalanceDays.setSickLeave(userLeaveBalance.getSickLeave());
+		userLeaveBalanceDays.setTotalLeaves(userLeaveBalance.getTotalLeaves());
+		
+		ArrayList<UserLeaveBalancedays> userLeaveBalanceList = new ArrayList<>();
+		userLeaveBalanceList.add(userLeaveBalanceDays);
+		
+		return ResponseEntity.ok(userLeaveBalanceList);
 	}
 
 
