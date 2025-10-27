@@ -161,6 +161,7 @@ public class AdminServiceImplementation implements AdminService{
 		
 		newRoles.setRoleName(newRole);
 		newRoles.setDescription(description);
+	
 		rolesRepository.save(newRoles);
 		
 		return ResponseEntity.ok("New Role Added Successfully, Now add role based leave policies next.");
