@@ -2,18 +2,25 @@ package com.smartleavemanagement.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
+import com.smartleavemanagement.DTOs.LeaveRequests;
 import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.controller.UsersController;
+import com.smartleavemanagement.enums.LeaveStatus;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.CountryCalendars;
+import com.smartleavemanagement.model.LeaveApplicationForm;
 import com.smartleavemanagement.model.RegistrationHistory;
 import com.smartleavemanagement.model.RoleBasedLeaves;
 import com.smartleavemanagement.model.Roles;
@@ -21,6 +28,7 @@ import com.smartleavemanagement.model.Users;
 import com.smartleavemanagement.model.UsersLeaveBalance;
 import com.smartleavemanagement.repository.AdminsRepository;
 import com.smartleavemanagement.repository.CountryCalendarsRepository;
+import com.smartleavemanagement.repository.LeaveApplicationFormRepository;
 import com.smartleavemanagement.repository.RegistrationHistoryRepository;
 import com.smartleavemanagement.repository.RoleBasedLeavesRepository;
 import com.smartleavemanagement.repository.RolesRepository;
@@ -50,6 +58,8 @@ public class AdminServiceImplementation implements AdminService{
 	
 	private final UsersLeaveBalanceRepository usersLeaveBalanceRepository;
 	
+	private final LeaveApplicationFormRepository leaveApplicationFormRepository;
+	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
@@ -57,11 +67,12 @@ public class AdminServiceImplementation implements AdminService{
 			RegistrationHistoryRepository registrationHistoryRepository, RolesRepository rolesRepository,
 			CountryCalendarsRepository countryCalendarsRepository, UsersController usersController,
 			RoleBasedLeavesRepository roleBasedLeavesRepository,UsersRepository usersRepository,
-			UsersLeaveBalanceRepository usersLeaveBalanceRepository)
+			UsersLeaveBalanceRepository usersLeaveBalanceRepository,
+			LeaveApplicationFormRepository leaveApplicationFormRepository)
 	{
 		this.adminsRepository=adminsRepository;
 		this.jwtUtil=jwtUtil;
-		
+		this.leaveApplicationFormRepository=leaveApplicationFormRepository;
 		this.registrationHistoryRepository=registrationHistoryRepository;
 		this.countryCalendarsRepository=countryCalendarsRepository;
 		this.rolesRepository = rolesRepository;
@@ -287,6 +298,104 @@ public class AdminServiceImplementation implements AdminService{
 	    return ResponseEntity.ok("Successfully added leaves to user");
 
 	}
+	
+	public ResponseEntity<?> getAllLeaveRequests(int adminId)
+	{
+		
+		
+		List<LeaveApplicationForm> allUsersLeaveRequests = leaveApplicationFormRepository.findAll();
+		
+		if(allUsersLeaveRequests == null)
+		{
+			return ResponseEntity.badRequest().body("Leave Requests are Not Found !");
+		}
+		
+	
+		ArrayList<LeaveRequests> allUsersLeavesRequestsList = new ArrayList<LeaveRequests>();
+		
+		for(LeaveApplicationForm singleUserLeavesRequests : allUsersLeaveRequests)
+		{
+			LeaveRequests newLeaveRequests = new LeaveRequests();
+			Users user = usersRepository.findById(singleUserLeavesRequests.getUserId()).orElse(null);
+			newLeaveRequests.setUserName(user.getUserName());
+			newLeaveRequests.setLeaveId(singleUserLeavesRequests.getLeaveId());
+			newLeaveRequests.setUserId(singleUserLeavesRequests.getUserId());
+			newLeaveRequests.setUserRole(singleUserLeavesRequests.getRoleName());
+			newLeaveRequests.setLeaveType(singleUserLeavesRequests.getLeaveType());
+			newLeaveRequests.setStartDate(singleUserLeavesRequests.getStartDate());
+			newLeaveRequests.setEndDate(singleUserLeavesRequests.getEndDate());
+			newLeaveRequests.setDuration(singleUserLeavesRequests.getDuration());
+			newLeaveRequests.setApprover(singleUserLeavesRequests.getApprover());
+			newLeaveRequests.setLeaveStatus(singleUserLeavesRequests.getLeaveStatus());
+			allUsersLeavesRequestsList.add(newLeaveRequests);
+		}
+		
+		
+		return ResponseEntity.ok(allUsersLeavesRequestsList);
+	}
+	
+	public ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId) {
+	    Users admin = usersRepository.findById(adminId).orElse(null);
+//	    if (admin == null) {
+//	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can approve leave requests.");
+//	    }
+
+	    LeaveApplicationForm request = leaveApplicationFormRepository.findById(leaveId).orElse(null);
+	    if (request == null || request.getLeaveStatus() != LeaveStatus.PENDING) {
+	        return ResponseEntity.badRequest().body("Leave request not found or already processed.");
+	    }
+
+	    UsersLeaveBalance balance = usersLeaveBalanceRepository.findByUser_UserId(request.getUserId());
+	    float duration = request.getDuration();
+	    String leaveType = request.getLeaveType().toUpperCase();
+
+	    switch (leaveType) {
+	        case "SICK":
+	            balance.setSickLeave(balance.getSickLeave() - duration);
+	            break;
+	        case "CASUAL":
+	            balance.setCasualLeave(balance.getCasualLeave() - duration);
+	            break;
+	        case "PATERNITY":
+	            balance.setPaternityLeave(balance.getPaternityLeave() - duration);
+	            break;
+	        case "MATERNITY":
+	            balance.setMaternityLeave(balance.getMaternityLeave() - duration);
+	            break;
+	        case "EARNED":
+	            balance.setEarnedLeave(balance.getEarnedLeave() - duration);
+	            break;
+	        default:
+	            return ResponseEntity.badRequest().body("Invalid leave type.");
+	    }
+
+	    balance.setTotalLeaves(balance.getTotalLeaves() - duration);
+	    request.setLeaveStatus(LeaveStatus.APPROVED);
+
+	    usersLeaveBalanceRepository.save(balance);
+	    leaveApplicationFormRepository.save(request);
+
+	    return ResponseEntity.ok("Leave request approved successfully.");
+	}
+	
+	public ResponseEntity<String> rejectLeaveRequestByAdmin(int adminId, int leaveId) {
+	    Users admin = usersRepository.findById(adminId).orElse(null);
+	    if (admin == null || !"ADMIN".equalsIgnoreCase(admin.getUserRole())) {
+	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can reject leave requests.");
+	    }
+
+	    LeaveApplicationForm request = leaveApplicationFormRepository.findById(leaveId).orElse(null);
+	    if (request == null || request.getLeaveStatus() != LeaveStatus.PENDING) {
+	        return ResponseEntity.badRequest().body("Leave request not found or already processed.");
+	    }
+
+	    request.setLeaveStatus(LeaveStatus.REJECTED);
+	    leaveApplicationFormRepository.save(request);
+
+	    return ResponseEntity.ok("Leave request rejected successfully.");
+	}
+
+
 	
 
 }

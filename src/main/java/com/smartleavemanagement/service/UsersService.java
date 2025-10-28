@@ -19,4 +19,5 @@ public interface UsersService {
     ResponseEntity<String> updatePassword(int userId, String oldPassword, String newPassword, String token);
     ResponseEntity<List<HolidayCalendar>> getHolidays(int userId);
     ResponseEntity<List<UserLeaveBalancedays>> getUserLeaveBalance(int userId);
+    ResponseEntity<String> updateNewPassword(int userId,String newPassword, String token);
 }

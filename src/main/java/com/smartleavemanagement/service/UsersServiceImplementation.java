@@ -339,6 +339,34 @@ public class UsersServiceImplementation implements UsersService {
 		
 		return ResponseEntity.ok(userLeaveBalanceList);
 	}
+	@Override
+	public ResponseEntity<String> updateNewPassword(int userId,String newPassword, String token) {
+	    if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
 
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to update this user's password");
+	    }
 
+	    Users user = usersRepository.findById(userId).orElse(null);
+	    if (user == null) {
+	        return ResponseEntity.status(404).body("User not found");
+	    }
+
+	    if (user.getOtpStatus() != OtpStatus.VERIFIED) {
+	        return ResponseEntity.badRequest().body("OTP verification required before updating password");
+	    }
+
+	   
+
+	    user.setPassword(passwordEncoder.encode(newPassword));
+	    user.setOtpStatus(OtpStatus.GENERATE);
+	    usersRepository.save(user);
+
+	    return ResponseEntity.ok("Password updated successfully");
+	}
+
+	
 }

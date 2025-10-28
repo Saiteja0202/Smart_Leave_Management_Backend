@@ -3,6 +3,7 @@ package com.smartleavemanagement.service;
 import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
@@ -18,4 +19,7 @@ public interface AdminService {
 	ResponseEntity<String> addNewCountryCalendar(int userId,String countryName, int calendarYear, String holidayName,LocalDate hoildayDate, String token);
 	ResponseEntity<String> addNewLeavePolicies(int userId, RoleBasedLeaves roleBasedLeaves, String token);
 	ResponseEntity<String> promotionToUser(int userId,String roleName);
+	ResponseEntity<?> getAllLeaveRequests(int adminId);
+	ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId);
+	ResponseEntity<String> rejectLeaveRequestByAdmin(int userId, int requesterId);
 }

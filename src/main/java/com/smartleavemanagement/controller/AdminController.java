@@ -103,6 +103,25 @@ public class AdminController {
 	 {
 		 return adminService.promotionToUser(userId, roleName);
 	 }
+	 
+	 
+	 @GetMapping("/get-all-leave-requests/{adminId}")
+	 public ResponseEntity<?> getAllLeaveRequests(@PathVariable int adminId)
+	 {
+		 return adminService.getAllLeaveRequests(adminId);
+	 }
+	 
+	 	@PostMapping("/approve/{adminId}/{leaveId}")
+	    public ResponseEntity<String> approveLeave(@PathVariable int adminId, @PathVariable int leaveId) {
+	        return adminService.approveLeaveRequestByAdmin(adminId, leaveId);
+	    }
+
+	    @PostMapping("/reject/{adminId}/{leaveId}")
+	    public ResponseEntity<String> rejectLeave(@PathVariable int adminId, @PathVariable int leaveId) {
+	        return adminService.rejectLeaveRequestByAdmin(adminId, leaveId);
+	    }
+	 
+	 
 	
 
 }

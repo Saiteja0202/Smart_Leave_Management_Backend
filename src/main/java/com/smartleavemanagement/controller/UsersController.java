@@ -105,6 +105,19 @@ public class UsersController {
     public ResponseEntity<List<UserLeaveBalancedays>> getUserLeaveBalance(@PathVariable int userId)
     {
     	return usersService.getUserLeaveBalance(userId);
+    	
+    }
+    
+    @PutMapping("/update-new-password/{userId}")
+    public ResponseEntity<String> updateNewPassword(
+            @PathVariable int userId,
+            @RequestBody String payLoad,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        String newPassword = payLoad;
+
+        return usersService.updateNewPassword(userId, newPassword, token);
     }
     
 }
