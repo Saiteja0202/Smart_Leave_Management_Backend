@@ -49,13 +49,7 @@ public class LeaveApplicationForm {
 	
 	private float duration;
 
-	public float getDuration() {
-		return duration;
-	}
-
-	public void setDuration(float duration) {
-		this.duration = duration;
-	}
+	private LocalDate appliedDate;
 
 	public int getLeaveId() {
 		return leaveId;
@@ -129,20 +123,48 @@ public class LeaveApplicationForm {
 		this.approver = approver;
 	}
 
-	public LeaveApplicationForm(int leaveId, int userId, String roleName, String leaveType, LocalDate startDate,
-			LocalDate endDate, String comments, LeaveStatus leaveStatus, String approver) {
+	public float getDuration() {
+		return duration;
+	}
+
+	public void setDuration(float duration) {
+		this.duration = duration;
+	}
+
+	public LocalDate getAppliedDate() {
+		return appliedDate;
+	}
+
+	public void setAppliedDate(LocalDate appliedDate) {
+		this.appliedDate = appliedDate;
+	}
+
+	public LeaveApplicationForm(int leaveId, int userId, String roleName,
+			@NotBlank(message = "Leave type is required") String leaveType,
+			@NotNull(message = "Start date is required") LocalDate startDate,
+			@NotNull(message = "Start date is required") LocalDate endDate,
+			@NotBlank(message = "Reason for leave is required") String comments, LeaveStatus leaveStatus,
+			String approver, float duration, LocalDate appliedDate) {
 		super();
 		this.leaveId = leaveId;
+		this.userId = userId;
+		this.roleName = roleName;
 		this.leaveType = leaveType;
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.comments = comments;
+		this.leaveStatus = leaveStatus;
+		this.approver = approver;
+		this.duration = duration;
+		this.appliedDate = appliedDate;
 	}
 
 	public LeaveApplicationForm() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+	
+	
 	
 	
 	
