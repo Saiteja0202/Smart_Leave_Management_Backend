@@ -50,6 +50,7 @@ public class UsersServiceImplementation implements UsersService {
  
 	private final RoleBasedLeavesRepository roleBasedLeavesRepository;
 	
+	
     public UsersServiceImplementation(
         UsersRepository usersRepository,
         PasswordEncoder passwordEncoder,
@@ -59,8 +60,7 @@ public class UsersServiceImplementation implements UsersService {
         RegistrationHistoryRepository registrationHistoryRepository,
         CountryCalendarsRepository countryCalendarsRepository,
         UsersLeaveBalanceRepository usersLeaveBalanceRepository,
-        RoleBasedLeavesRepository roleBasedLeavesRepository
-    ) {
+        RoleBasedLeavesRepository roleBasedLeavesRepository    ) {
         this.usersRepository = usersRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -130,7 +130,14 @@ public class UsersServiceImplementation implements UsersService {
 		registrationHistoryRepository.save(registrationHistory);
 		
 		addRoleBasedLeavesToUsers(user.getUserId(),user.getUserRole());
-				
+		
+		
+		
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setTo(user.getEmail());
+		message.setSubject("Registration Successfull");
+		message.setText("Thank you for registering"+"\n\n Your Username : "+user.getUserName()+"\n\n Your Role : "+user.getUserRole()+"\n\n "+"\n\nRegards,\nSmart Leave Management Team");
+		mailSender.send(message);	
 		return ResponseEntity.ok("User registered successfully");
 	}
 
@@ -149,6 +156,9 @@ public class UsersServiceImplementation implements UsersService {
 
 		LoginResponse response = new LoginResponse(user.getUserId(), user.getRole().getRoleName(), user.getEmail(),
 				token);
+		
+		
+		
 
 		return ResponseEntity.ok(response);
 
@@ -183,13 +193,32 @@ public class UsersServiceImplementation implements UsersService {
 	}
 	
 	@Override
-	public ResponseEntity<String> generateOtp(String email, String context) {
+	public ResponseEntity<String> generateOtp(String email, String context,String token) {
+		
+		
+	    
+	    
 	    Optional<Users> optionalUser = usersRepository.findByEmail(email);
 	    if (optionalUser.isEmpty()) {
 	        return ResponseEntity.status(404).body("User not found");
 	    }
-
 	    Users user = optionalUser.get();
+	    
+	    if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != user.getUserId()) {
+	        return ResponseEntity.status(403).body("You are not authorized to Generate OTP !");
+	    }
+	    
+	    
+
+	    
+	   
+	    
+	    
 	    int otp = (int)(Math.random() * 9000) + 1000;
 
 	    user.setOtp(otp);
@@ -206,8 +235,19 @@ public class UsersServiceImplementation implements UsersService {
 	    return ResponseEntity.ok("OTP generated and sent to email");
 	}
 	@Override
-	public ResponseEntity<String> verifyOtp(int otp, String context) {
+	public ResponseEntity<String> verifyOtp(int otp, String context,String token) {
 	    Users user = usersRepository.findByOtp(otp).orElse(null);
+	    
+	    
+	    if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != user.getUserId()) {
+	        return ResponseEntity.status(403).body("You are not authorized to Calculate the duration !");
+	    }
+	    
 	    if (user == null) {
 	        return ResponseEntity.badRequest().body("Wrong OTP");
 	    }
@@ -339,6 +379,7 @@ public class UsersServiceImplementation implements UsersService {
 		
 		return ResponseEntity.ok(userLeaveBalanceList);
 	}
+	
 	@Override
 	public ResponseEntity<String> updateNewPassword(int userId,String newPassword, String token) {
 	    if (!jwtUtil.validateToken(token)) {

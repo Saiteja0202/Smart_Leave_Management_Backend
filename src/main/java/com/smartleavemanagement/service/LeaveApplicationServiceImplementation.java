@@ -11,8 +11,11 @@ import java.util.stream.Collectors;
 import org.hibernate.query.NativeQuery.ReturnableResultNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.smartleavemanagement.DTOs.LeaveRequests;
 import com.smartleavemanagement.DTOs.LeaveStartAndEndDates;
@@ -28,6 +31,7 @@ import com.smartleavemanagement.repository.LeaveApplicationFormRepository;
 import com.smartleavemanagement.repository.RoleBasedLeavesRepository;
 import com.smartleavemanagement.repository.UsersLeaveBalanceRepository;
 import com.smartleavemanagement.repository.UsersRepository;
+import com.smartleavemanagement.securityconfiguration.JwtUtil;
 
 @Service
 public class LeaveApplicationServiceImplementation implements LeaveApplicationService {
@@ -38,16 +42,22 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 	
 	private final UsersRepository userRepository;
 	
+	private final JwtUtil jwtUtil;
+	
 	private final UsersLeaveBalanceRepository usersLeaveBalanceRepository;
 	
 	private final LeaveApplicationFormRepository leaveApplicationFormRepository;
 	
 	private final RoleBasedLeavesRepository roleBasedLeavesRepository;
 	
+	private final JavaMailSender mailSender;
+	
+	
 	public LeaveApplicationServiceImplementation(UsersRepository usersRepository,CountryCalendarsRepository countryCalendarsRepository
 			,UsersRepository userRepository,UsersLeaveBalanceRepository usersLeaveBalanceRepository,
 			LeaveApplicationFormRepository leaveApplicationFormRepository,
-			RoleBasedLeavesRepository roleBasedLeavesRepository)
+			RoleBasedLeavesRepository roleBasedLeavesRepository,
+			JavaMailSender mailSender,JwtUtil jwtUtil)
 	{
 		this.usersRepository=usersRepository;
 		this.countryCalendarsRepository=countryCalendarsRepository;
@@ -55,11 +65,28 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		this.usersLeaveBalanceRepository=usersLeaveBalanceRepository;
 		this.leaveApplicationFormRepository=leaveApplicationFormRepository;
 		this.roleBasedLeavesRepository=roleBasedLeavesRepository;
+		this.mailSender=mailSender;
+		this.jwtUtil=jwtUtil;
 	}
 	
-	public ResponseEntity<?> calculateDuration(int userId,LocalDate startDate, LocalDate endDate)
+	
+	
+	public ResponseEntity<?> calculateDuration(int userId,LocalDate startDate, LocalDate endDate, String token)
 	{
 		Users user = usersRepository.findById(userId).orElse(null);
+		
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Calculate the duration !");
+	    }
+
+		
+		List<CountryCalendars> allHolidays = countryCalendarsRepository.findAllByCountryName(user.getCountryName());
 		
 		LocalDate currentDate = LocalDate.now();
 		
@@ -81,12 +108,22 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			 
 			 for(int i=0;i<daysBetween;i++)
 			 {
+				 
 				 LocalDate date = startDate.plusDays(i);
+				 
+				 
+				 
 				 if((newLeaveApplicationForm.getStartDate() == date) || (newLeaveApplicationForm.getEndDate()==date))
 				 {
-					 return ResponseEntity.badRequest().body("You cannot apply leave on same date that previously applied");
+					 if(newLeaveApplicationForm.getLeaveStatus().equals(LeaveStatus.PENDING))
+					 {
+						 return ResponseEntity.badRequest().body("You cannot apply leave on same date that previously applied");
+					 }
+					 
 				 }
 			 }
+			 
+			 
 		 }
 		 
 		 
@@ -110,7 +147,7 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			return ResponseEntity.badRequest().body("The End Date you selected is before the Start Date. Please enter an End Date that is on or after the Start Date.");
 		}
 		
-		List<CountryCalendars> allHolidays = countryCalendarsRepository.findAllByCountryName(user.getCountryName());
+		
 		
 		for(CountryCalendars holiday : allHolidays)
 		{
@@ -125,23 +162,41 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			
 		}
 		
-		float duration = getWeekdaysBetween(startDate,endDate);
+		float duration = getWeekdaysBetween(startDate,endDate,allHolidays);
 		return ResponseEntity.ok(duration);
 	}
 	
 	
 	
 	
-	 public static float getWeekdaysBetween(LocalDate startDate, LocalDate endDate) {
+	 public static float getWeekdaysBetween(LocalDate startDate, LocalDate endDate, List<CountryCalendars> allHolidays) {
+		 
+		 
 	        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 	        float weekdays = 0;
 
+
 	        for (int i = 0; i < daysBetween; i++) {
-	            DayOfWeek day = startDate.plusDays(i).getDayOfWeek();
-	            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY) {
+	            LocalDate date = startDate.plusDays(i);
+	            DayOfWeek day = date.getDayOfWeek();
+
+	            if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+	                continue;
+	            }
+
+	            boolean isHoliday = false;
+	            for (CountryCalendars holiday : allHolidays) {
+	                if (holiday.getHolidayDate().equals(date)) {
+	                    isHoliday = true;
+	                    break;
+	                }
+	            }
+
+	            if (!isHoliday) {
 	                weekdays++;
 	            }
 	        }
+
 
 	        return weekdays;
 	    }
@@ -197,11 +252,22 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			}
 			
 		}
-		return getWeekdaysBetween(startDate,endDate);
+		return getWeekdaysBetween(startDate,endDate,allHolidays);
 	}
 	
-	public ResponseEntity<String> applyLeave(int userId, LeaveApplicationForm leaveApplicationForm) {
+	public ResponseEntity<String> applyLeave(int userId, LeaveApplicationForm leaveApplicationForm, String token) {
 	    try {
+	    	
+	    	if (!jwtUtil.validateToken(token)) {
+		        return ResponseEntity.status(401).body("Invalid or expired token");
+		    }
+
+		    Long tokenUserId = jwtUtil.extractUserId(token);
+		    if (tokenUserId == null || tokenUserId != userId) {
+		        return ResponseEntity.status(403).body("You are not authorized to Apply Leave!");
+		    }
+
+	    	
 	        Users user = userRepository.findById(userId).orElse(null);
 	        if (user == null) {
 	            return ResponseEntity.badRequest().body("User not found.");
@@ -273,6 +339,15 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 
 	        newLeaveApplicationForm.setApprover(approverRole);
 	        leaveApplicationFormRepository.save(newLeaveApplicationForm);
+	        
+	        SimpleMailMessage message = new SimpleMailMessage();
+	        message.setTo(user.getEmail());
+	        message.setSubject("Successfully Applied Leave");
+	        message.setText("Your Leave Details : -"+"\n\n Leave type : "+newLeaveApplicationForm.getLeaveType()+
+	        		"\n Duration : "+newLeaveApplicationForm.getDuration()+"\n Start date : "+newLeaveApplicationForm.getStartDate()+
+	        		"\n End date : "+newLeaveApplicationForm.getEndDate()+"\n Leave Status : "+newLeaveApplicationForm.getLeaveStatus()+
+	        		"\n Approver : "+newLeaveApplicationForm.getApprover()+"\n\nRegards,\nSmart Leave Management Team");
+	        mailSender.send(message);
 
 	        return ResponseEntity.ok("Successfully applied for leave, waiting for approval!");
 	    } catch (InvalidLeaveDates e) {
@@ -400,11 +475,21 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 	}
 	
 	
-	public ResponseEntity<String> approveLeaveRequest(int userId,int requesterId)
+	public ResponseEntity<String> approveLeaveRequest(int userId,int requesterId,String token)
 	{
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to approve leave !");
+	    }
+
 		List<LeaveRequests> newUserLeaveRequests = (List<LeaveRequests>) get(userId);
 		for(LeaveRequests singleNewUserLeaveRequests:newUserLeaveRequests)
 		{
+			Users user = usersRepository.findById(singleNewUserLeaveRequests.getUserId()).orElse(null);
 			if(singleNewUserLeaveRequests.getLeaveStatus().equals(LeaveStatus.PENDING))
 			{
 				
@@ -448,13 +533,36 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 					}
 					usersLeaveBalanceRepository.save(newUserLeaveBalance);
 					leaveApplicationFormRepository.save(singleNewLeaveApplicationForm);
+					SimpleMailMessage message = new SimpleMailMessage();
+					message.setTo(user.getEmail());
+					message.setSubject("Leave Approved");
+					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
+							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
+							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
+							"\n\nRegards,\nSmart Leave Management Team");
+					mailSender.send(message);
 				}
 			}
+			
+			
 		}
 		return ResponseEntity.ok("Successfully Approved");
 	}
-	public ResponseEntity<String> rejectLeaveRequest(int userId,int requesterId)
+	
+	public ResponseEntity<String> rejectLeaveRequest(int userId,int requesterId, String token)
 	{
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to cancel Leave!");
+	    }
+
+		
+		Users user = usersRepository.findById(userId).orElse(null);
 		List<LeaveRequests> newUserLeaveRequests = (List<LeaveRequests>) get(userId);
 		for(LeaveRequests singleNewUserLeaveRequests:newUserLeaveRequests)
 		{
@@ -466,10 +574,50 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 				{
 					singleNewLeaveApplicationForm.setLeaveStatus(LeaveStatus.REJECTED);
 					leaveApplicationFormRepository.save(singleNewLeaveApplicationForm);
+					SimpleMailMessage message = new SimpleMailMessage();
+					message.setTo(user.getEmail());
+					message.setSubject("Leave Rejected");
+					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
+							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
+							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
+							"\n\nRegards,\nSmart Leave Management Team");
+					mailSender.send(message);
 				}
 			}
 		}
 		return ResponseEntity.ok("Successfully Rejected");
+	}
+	
+	@Override
+	public ResponseEntity<String> cancelLeave(int userId,int leaveId, String token)
+	{
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to cancel Leave!");
+	    }
+
+	    
+		List<LeaveApplicationForm> userLeaveApplicationForm = leaveApplicationFormRepository.findByUserId(userId);
+		
+		LeaveApplicationForm userLeaveApplicationFormWithId = leaveApplicationFormRepository.findByLeaveId(leaveId).orElse(null);
+		
+		if(userLeaveApplicationFormWithId==null)
+		{
+			return ResponseEntity.badRequest().body("Not Found");
+		}
+		
+		if(userLeaveApplicationFormWithId.getLeaveStatus().equals(LeaveStatus.PENDING))
+		{
+			userLeaveApplicationFormWithId.setLeaveStatus(LeaveStatus.CANCELED);
+			leaveApplicationFormRepository.save(userLeaveApplicationFormWithId);
+		}
+		
+		return ResponseEntity.ok("Canceled Leave");
 	}
 
 

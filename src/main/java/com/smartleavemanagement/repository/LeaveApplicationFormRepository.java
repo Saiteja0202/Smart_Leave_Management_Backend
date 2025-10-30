@@ -12,6 +12,6 @@ public interface LeaveApplicationFormRepository extends JpaRepository<LeaveAppli
 	
 	List<LeaveApplicationForm> findByUserId(int userId);
 	
-	
+	Optional<LeaveApplicationForm> findByLeaveId(int leaveId);
 
 }
