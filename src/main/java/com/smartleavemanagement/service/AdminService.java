@@ -1,25 +1,23 @@
 package com.smartleavemanagement.service;
 
 import java.time.LocalDate;
-
+import java.util.List;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-
-import com.smartleavemanagement.model.Admins;
-import com.smartleavemanagement.model.CountryCalendars;
-import com.smartleavemanagement.model.RoleBasedLeaves;
+import com.smartleavemanagement.model.*;
 
 public interface AdminService {
-	
-	ResponseEntity<String> registerAdmin(Admins admins);
-	ResponseEntity<?> login(String username, String password);
-	ResponseEntity<String> addNewRole(int UserId,String newRole,String description,String token);
-	ResponseEntity<String> addNewCountryCalendar(int userId,String countryName, int calendarYear, String holidayName,LocalDate hoildayDate, String token);
-	ResponseEntity<String> addNewLeavePolicies(int userId, RoleBasedLeaves roleBasedLeaves, String token);
-	ResponseEntity<String> promotionToUser(int userId,String roleName);
-	ResponseEntity<?> getAllLeaveRequests(int adminId);
-	ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId);
-	ResponseEntity<String> rejectLeaveRequestByAdmin(int userId, int requesterId);
+
+    ResponseEntity<String> registerAdmin(Admins admins);
+    ResponseEntity<?> login(String username, String password);
+
+    ResponseEntity<String> addNewRole(int userId, String newRole, String description, String token);
+    ResponseEntity<String> addNewCountryCalendar(int userId, String countryName, int calendarYear, String holidayName, LocalDate holidayDate, String token);
+    ResponseEntity<String> addNewLeavePolicies(int userId, RoleBasedLeaves roleBasedLeaves, String token);
+    ResponseEntity<String> promotionToUser(int adminId, int userId, String roleName, String token);
+    ResponseEntity<?> getAllLeaveRequests(int adminId);
+    ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId, String token);
+    ResponseEntity<String> rejectLeaveRequestByAdmin(int adminId, int leaveId, String token);
+    ResponseEntity<List<Roles>> getAllRoles(int adminId);
+    ResponseEntity<List<RoleBasedLeaves>> getAllRoleBasedLeavePolicies(int adminId);
+    ResponseEntity<List<CountryCalendars>> getAllHolidays(int adminId);
 }

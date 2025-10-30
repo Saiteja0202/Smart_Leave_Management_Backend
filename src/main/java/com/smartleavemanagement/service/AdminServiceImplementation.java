@@ -1,5 +1,6 @@
 package com.smartleavemanagement.service;
 
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class AdminServiceImplementation implements AdminService{
 
     private final UsersController usersController;
 
+
     private final RolesRepository rolesRepository;
 
 	private final AdminsRepository adminsRepository;
@@ -80,6 +82,7 @@ public class AdminServiceImplementation implements AdminService{
 		this.roleBasedLeavesRepository=roleBasedLeavesRepository;
 		this.usersRepository=usersRepository;
 		this.usersLeaveBalanceRepository=usersLeaveBalanceRepository;
+	
 	}
 	
 	@Override
@@ -108,11 +111,17 @@ public class AdminServiceImplementation implements AdminService{
 		registrationHistory.setRole(admins.getRole());
 		registrationHistoryRepository.save(registrationHistory);
 		
+		Roles existingRole = rolesRepository.findByRoleNameIgnoreCase(admins.getRole()).orElse(null);
 		
-		Roles newRole = new Roles();
-		newRole.setRoleName("ADMIN");
-		newRole.setDescription("All-access system administrator with full control");
-		rolesRepository.save(newRole);
+		if(existingRole == null)
+		{
+			Roles newRole = new Roles();
+			newRole.setRoleName("ADMIN");
+			newRole.setDescription("All-access system administrator with full control");
+			rolesRepository.save(newRole);
+		}
+		
+		
 		
 		
 	    return ResponseEntity.ok("Admin registered successfully");
@@ -143,9 +152,12 @@ public class AdminServiceImplementation implements AdminService{
 	        admin.getEmail(),
 	        token
 	    );
+	    
+	    
+	    
 
 	    return ResponseEntity.ok(response);
-	
+	    
 	}
 	
 	
@@ -187,7 +199,7 @@ public class AdminServiceImplementation implements AdminService{
 
 	    Long tokenUserId = jwtUtil.extractUserId(token);
 	    if (tokenUserId == null || tokenUserId != userId) {
-	        return ResponseEntity.status(403).body("You are not authorized to add the roles!");
+	        return ResponseEntity.status(403).body("You are not authorized to add  new Holidays!");
 	    }
 
 	    Admins admin = adminsRepository.findById(userId).orElse(null);
@@ -249,8 +261,20 @@ public class AdminServiceImplementation implements AdminService{
 	}
 	
 	
-	public ResponseEntity<String> promotionToUser(int userId,String roleName)
+	public ResponseEntity<String> promotionToUser(int adminId,int userId,String roleName, String token)
 	{
+		
+
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("You are not authorized to promote the user!");
+	    }
+		
 		RoleBasedLeaves roleBasedLeaves = roleBasedLeavesRepository.findByRole(roleName).orElse(null);
 		
 		Roles role = rolesRepository.findByRoleNameIgnoreCase(roleName).orElse(null);
@@ -334,12 +358,21 @@ public class AdminServiceImplementation implements AdminService{
 		return ResponseEntity.ok(allUsersLeavesRequestsList);
 	}
 	
-	public ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId) {
+	public ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId, String token) {
 	    Users admin = usersRepository.findById(adminId).orElse(null);
 //	    if (admin == null) {
 //	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can approve leave requests.");
 //	    }
 
+	    if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Approve the leave!");
+	    }
+	    
 	    LeaveApplicationForm request = leaveApplicationFormRepository.findById(leaveId).orElse(null);
 	    if (request == null || request.getLeaveStatus() != LeaveStatus.PENDING) {
 	        return ResponseEntity.badRequest().body("Leave request not found or already processed.");
@@ -378,7 +411,18 @@ public class AdminServiceImplementation implements AdminService{
 	    return ResponseEntity.ok("Leave request approved successfully.");
 	}
 	
-	public ResponseEntity<String> rejectLeaveRequestByAdmin(int adminId, int leaveId) {
+	public ResponseEntity<String> rejectLeaveRequestByAdmin(int adminId, int leaveId, String token) {
+		
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Reject Leave!");
+	    }
+		
 	    Users admin = usersRepository.findById(adminId).orElse(null);
 	    if (admin == null || !"ADMIN".equalsIgnoreCase(admin.getUserRole())) {
 	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can reject leave requests.");
@@ -391,11 +435,84 @@ public class AdminServiceImplementation implements AdminService{
 
 	    request.setLeaveStatus(LeaveStatus.REJECTED);
 	    leaveApplicationFormRepository.save(request);
+	    
+	    
 
 	    return ResponseEntity.ok("Leave request rejected successfully.");
 	}
 
+	
+	public ResponseEntity<List<Roles>> getAllRoles(int adminId)
+	{
+		List<Roles> roles = rolesRepository.findAll();
+		
 
+		if(roles == null)
+		{
+			ResponseEntity.badRequest().body("Not Found");
+		}
+		
+		ArrayList<Roles> rolesList = new ArrayList<Roles>();
+		for(Roles role:roles)
+		{
+			role.setRoleName(role.getRoleName());
+			role.setDescription(role.getDescription());
+			rolesList.add(role);
+		}
+		return ResponseEntity.ok(rolesList);
+	}
+
+	
+	public ResponseEntity<List<RoleBasedLeaves>> getAllRoleBasedLeavePolicies(int adminId)
+	{
+		
+		List<RoleBasedLeaves> roleBasedLeaves = roleBasedLeavesRepository.findAll();
+		
+		if(roleBasedLeaves == null)
+		{
+			ResponseEntity.badRequest().body("Not Found");
+		}
+		
+		
+		ArrayList<RoleBasedLeaves> roleBasedLeavesList = new ArrayList<RoleBasedLeaves>();
+		for(RoleBasedLeaves newRoleBasedLeaves : roleBasedLeaves)
+		{
+			newRoleBasedLeaves.setRole(newRoleBasedLeaves.getRole());
+			newRoleBasedLeaves.setCasualLeave(newRoleBasedLeaves.getCasualLeave());
+			newRoleBasedLeaves.setEarnedLeave(newRoleBasedLeaves.getEarnedLeave());
+			newRoleBasedLeaves.setPaternityLeave(newRoleBasedLeaves.getPaternityLeave());
+			newRoleBasedLeaves.setMaternityLeave(newRoleBasedLeaves.getMaternityLeave());
+			newRoleBasedLeaves.setSickLeave(newRoleBasedLeaves.getSickLeave());
+			newRoleBasedLeaves.setTotalLeaves(newRoleBasedLeaves.getTotalLeaves());
+			roleBasedLeavesList.add(newRoleBasedLeaves);
+		}
+		return ResponseEntity.ok(roleBasedLeavesList);
+	}
+	
+	
+	public ResponseEntity<List<CountryCalendars>> getAllHolidays(int adminId)
+	{
+		
+		List<CountryCalendars> countryCalendars = countryCalendarsRepository.findAll();
+		
+		if(countryCalendars == null)
+		{
+			ResponseEntity.badRequest().body("Not Found");
+		}
+		
+		ArrayList<CountryCalendars> countryCalendarsList = new ArrayList<CountryCalendars>();
+		for(CountryCalendars newCountryCalendars : countryCalendars)
+		{
+			newCountryCalendars.setCalendarYear(newCountryCalendars.getCalendarYear());
+			newCountryCalendars.setCountryName(newCountryCalendars.getCountryName());
+			newCountryCalendars.setHolidayDate(newCountryCalendars.getHolidayDate());
+			newCountryCalendars.setHolidayName(newCountryCalendars.getHolidayName());
+			countryCalendarsList.add(newCountryCalendars);
+		}
+		
+		
+		return ResponseEntity.ok(countryCalendarsList);
+	}
 	
 
 }
