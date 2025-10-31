@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.catalina.User;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -546,6 +547,39 @@ public class AdminServiceImplementation implements AdminService{
 	}
 	
 	
+	public ResponseEntity<String> deleteUser(int adminId, int userId, String token)
+	{
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Delete User!");
+	    }
+
+		Users user = usersRepository.findById(userId).orElse(null);
+		UsersLeaveBalance usersLeaveBalance = usersLeaveBalanceRepository.findByUser_UserId(userId);
+		List<LeaveApplicationForm> leaveApplicationForm = leaveApplicationFormRepository.findByUserId(userId);
+	
+		if(user == null || usersLeaveBalance ==null || leaveApplicationForm==null)
+		{
+			return ResponseEntity.badRequest().body("User Not Found");
+		}
+		
+		for(LeaveApplicationForm newLeaveApplicationForm : leaveApplicationForm)
+		{
+			leaveApplicationFormRepository.delete(newLeaveApplicationForm);
+		}
+		
+		usersLeaveBalanceRepository.delete(usersLeaveBalance);
+		usersRepository.delete(user);
+		
+		 
+		return ResponseEntity.ok("User "+user.getFirstName() +" "+user.getLastName()+" deleted Successfully");
+	}
+	
+	
 	/*
 	 * 
 	 */
@@ -558,7 +592,7 @@ public class AdminServiceImplementation implements AdminService{
     private CountryCalendarsRepository holidayRepository;
 
     @PostConstruct
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     public void syncHolidays() {
         List<CountryCalendars> excelHolidays = fetchHolidaysFromExcel(FILE_URL);
         List<CountryCalendars> dbHolidays = holidayRepository.findAll();

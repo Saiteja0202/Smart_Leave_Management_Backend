@@ -125,4 +125,14 @@ public class AdminController {
     public ResponseEntity<List<CountryCalendars>> getAllHolidays(@PathVariable int adminId) {
         return adminService.getAllHolidays(adminId);
     }
+    
+    @DeleteMapping("/delete-user/{adminId}/{userId}")
+    public ResponseEntity<String> deleteUser(@PathVariable int adminId,
+            @PathVariable int userId,
+            @RequestHeader("Authorization") String authHeader) {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return adminService.deleteUser(adminId, userId, token);
+    }
+    
+    
 }
