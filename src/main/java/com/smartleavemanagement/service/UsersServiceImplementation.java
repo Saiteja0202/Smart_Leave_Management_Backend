@@ -3,8 +3,10 @@ package com.smartleavemanagement.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -17,12 +19,14 @@ import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.DTOs.UserLeaveBalancedays;
 import com.smartleavemanagement.enums.OtpStatus;
 import com.smartleavemanagement.model.CountryCalendars;
+import com.smartleavemanagement.model.LeaveApplicationForm;
 import com.smartleavemanagement.model.RegistrationHistory;
 import com.smartleavemanagement.model.RoleBasedLeaves;
 import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.model.Users;
 import com.smartleavemanagement.model.UsersLeaveBalance;
 import com.smartleavemanagement.repository.CountryCalendarsRepository;
+import com.smartleavemanagement.repository.LeaveApplicationFormRepository;
 import com.smartleavemanagement.repository.RegistrationHistoryRepository;
 import com.smartleavemanagement.repository.RoleBasedLeavesRepository;
 import com.smartleavemanagement.repository.RolesRepository;
@@ -45,6 +49,7 @@ public class UsersServiceImplementation implements UsersService {
 	
 	private final CountryCalendarsRepository countryCalendarsRepository;
 	
+	private final LeaveApplicationFormRepository leaveApplicationFormRepository;
 	
 	private final UsersLeaveBalanceRepository usersLeaveBalanceRepository;
  
@@ -60,7 +65,8 @@ public class UsersServiceImplementation implements UsersService {
         RegistrationHistoryRepository registrationHistoryRepository,
         CountryCalendarsRepository countryCalendarsRepository,
         UsersLeaveBalanceRepository usersLeaveBalanceRepository,
-        RoleBasedLeavesRepository roleBasedLeavesRepository    ) {
+        RoleBasedLeavesRepository roleBasedLeavesRepository,
+        LeaveApplicationFormRepository leaveApplicationFormRepository) {
         this.usersRepository = usersRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -70,6 +76,7 @@ public class UsersServiceImplementation implements UsersService {
         this.countryCalendarsRepository=countryCalendarsRepository;
         this.usersLeaveBalanceRepository=usersLeaveBalanceRepository;
         this.roleBasedLeavesRepository=roleBasedLeavesRepository;
+        this.leaveApplicationFormRepository=leaveApplicationFormRepository;
     }
     
   
@@ -409,5 +416,50 @@ public class UsersServiceImplementation implements UsersService {
 	    return ResponseEntity.ok("Password updated successfully");
 	}
 
+	public ResponseEntity<String> deleteAccount(int userId, String token){
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != userId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Delete User!");
+	    }
+
+		Users user = usersRepository.findById(userId).orElse(null);
+		UsersLeaveBalance usersLeaveBalance = usersLeaveBalanceRepository.findByUser_UserId(userId);
+		List<LeaveApplicationForm> leaveApplicationForm = leaveApplicationFormRepository.findByUserId(userId);
+	
+		if(user == null || usersLeaveBalance ==null || leaveApplicationForm==null)
+		{
+			return ResponseEntity.badRequest().body("User Not Found");
+		}
+		
+		for(LeaveApplicationForm newLeaveApplicationForm : leaveApplicationForm)
+		{
+			leaveApplicationFormRepository.delete(newLeaveApplicationForm);
+		}
+		
+		usersLeaveBalanceRepository.delete(usersLeaveBalance);
+		usersRepository.delete(user);
+		
+		
+		return ResponseEntity.ok("Successfully Deleted Account");
+	}
+	
+	public ResponseEntity<List<String>> getAllCountriesForUsers()
+	{
+		
+		List<CountryCalendars> allCountryCalendars = countryCalendarsRepository.findAll();
+		Set<String> countries = new HashSet<String>();
+		for(CountryCalendars countryCalendars : allCountryCalendars)
+		{
+			
+			countries.add(countryCalendars.getCountryName());
+		}
+		ArrayList<String> allCountries = new ArrayList<>(countries);
+		return ResponseEntity.ok(allCountries);
+	}
 	
 }

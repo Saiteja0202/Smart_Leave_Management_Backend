@@ -20,4 +20,5 @@ public interface AdminService {
     ResponseEntity<List<Roles>> getAllRoles(int adminId);
     ResponseEntity<List<RoleBasedLeaves>> getAllRoleBasedLeavePolicies(int adminId);
     ResponseEntity<List<CountryCalendars>> getAllHolidays(int adminId);
+    ResponseEntity<String> deleteUser(int adminId, int userId, String token);
 }

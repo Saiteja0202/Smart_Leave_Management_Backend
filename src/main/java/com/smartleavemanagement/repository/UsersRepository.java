@@ -18,4 +18,6 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
 	Optional<Users> findById(int userId);
 	Optional<Users> findByRole_RoleNameIgnoreCase(String roleName);
 	
+
+	
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.DTOs.UserLeaveBalancedays;
+import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.Users;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.service.UsersService;
@@ -133,5 +134,19 @@ public class UsersController {
         String newPassword = payLoad;
 
         return usersService.updateNewPassword(userId, newPassword, token);
+    }
+    
+    
+    @DeleteMapping("/delete-account/{userId}")
+    public ResponseEntity<String> deleteAccount(@PathVariable int userId, @RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return usersService.deleteAccount(userId,token);
+    }
+    
+    
+    @GetMapping("/get-all-countries")
+    public ResponseEntity<List<String>> getAllCountriesForUsers() {
+        return usersService.getAllCountriesForUsers();
     }
 }
