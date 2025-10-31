@@ -1,16 +1,42 @@
 package com.smartleavemanagement.service;
 
+import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLContext;
+
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +62,11 @@ import com.smartleavemanagement.repository.RolesRepository;
 import com.smartleavemanagement.repository.UsersLeaveBalanceRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
+
+import jakarta.annotation.PostConstruct;
+
+import java.time.format.DateTimeFormatter;
+
 
 
 @Service
@@ -513,6 +544,166 @@ public class AdminServiceImplementation implements AdminService{
 		
 		return ResponseEntity.ok(countryCalendarsList);
 	}
+	
+	
+	/*
+	 * 
+	 */
+	
+
+    private static final String FILE_URL =
+            "https://docs.google.com/spreadsheets/d/1nkOpL4L6J9mDw2tLaezeO8KZnXxwhauCed1JG5u6bq8/export?format=xlsx";
+
+    @Autowired
+    private CountryCalendarsRepository holidayRepository;
+
+    @PostConstruct
+    @Scheduled(cron = "*/10 * * * * *")
+    public void syncHolidays() {
+        List<CountryCalendars> excelHolidays = fetchHolidaysFromExcel(FILE_URL);
+        List<CountryCalendars> dbHolidays = holidayRepository.findAll();
+
+        Map<String, CountryCalendars> excelMap = toMap(excelHolidays);
+        Map<String, CountryCalendars> dbMap = toMap(dbHolidays);
+
+        Set<String> allKeys = new HashSet<>();
+        allKeys.addAll(excelMap.keySet());
+        allKeys.addAll(dbMap.keySet());
+
+        int added = 0, updated = 0, deleted = 0;
+
+        for (String key : allKeys) {
+            CountryCalendars excelHoliday = excelMap.get(key);
+            CountryCalendars dbHoliday = dbMap.get(key);
+
+            if (excelHoliday != null && dbHoliday == null) {
+                holidayRepository.save(excelHoliday);
+                added++;
+            } else if (excelHoliday != null && dbHoliday != null) {
+                if (!isSame(excelHoliday, dbHoliday)) {
+                    dbHoliday.setCalendarYear(excelHoliday.getCalendarYear());
+                    dbHoliday.setHolidayDay(excelHoliday.getHolidayDay());
+                    dbHoliday.setHolidayDate(excelHoliday.getHolidayDate());
+                    dbHoliday.setHolidayName(excelHoliday.getHolidayName());
+                    holidayRepository.save(dbHoliday);
+                    updated++;
+                }
+            } else if (excelHoliday == null && dbHoliday != null) {
+                holidayRepository.delete(dbHoliday);
+                deleted++;
+            }
+        }
+
+        System.out.printf("✅ Sync Complete | Added: %d | Updated: %d | Deleted: %d%n", added, updated, deleted);
+    }
+
+    private boolean isSame(CountryCalendars a, CountryCalendars b) {
+        return a.getCountryName().equalsIgnoreCase(b.getCountryName())
+                && a.getHolidayDate().equals(b.getHolidayDate())
+                && a.getHolidayName().equalsIgnoreCase(b.getHolidayName());
+    }
+
+    private Map<String, CountryCalendars> toMap(List<CountryCalendars> list) {
+        Map<String, CountryCalendars> map = new HashMap<>();
+        for (CountryCalendars c : list) {
+            String key = (c.getCountryName() + "|" + c.getHolidayDate() + "|" + c.getHolidayName()).toLowerCase();
+            map.put(key, c);
+        }
+        return map;
+    }
+
+    public List<CountryCalendars> fetchHolidaysFromExcel(String fileUrl) {
+        List<CountryCalendars> holidays = new ArrayList<>();
+
+        try {
+            SSLContext sslContext = SSLContexts.custom()
+                    .loadTrustMaterial(null, new TrustAllStrategy())
+                    .build();
+
+            var sslSocketFactory = SSLConnectionSocketFactoryBuilder.create()
+                    .setSslContext(sslContext)
+                    .build();
+
+            HttpClientConnectionManager connectionManager =
+                    PoolingHttpClientConnectionManagerBuilder.create()
+                            .setSSLSocketFactory(sslSocketFactory)
+                            .build();
+
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                    .setConnectionManager(connectionManager)
+                    .build()) {
+
+                HttpGet request = new HttpGet(fileUrl);
+
+                try (CloseableHttpResponse response = httpClient.execute(request);
+                     InputStream inputStream = response.getEntity().getContent();
+                     Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+                    Sheet sheet = workbook.getSheetAt(0);
+                    boolean isHeader = true;
+                    DateTimeFormatter[] formatters = {
+                            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                    };
+
+                    for (Row row : sheet) {
+                        if (isHeader) {
+                            isHeader = false;
+                            continue;
+                        }
+
+                        String countryName = getCellValueAsString(row.getCell(1));
+                        String holidayName = getCellValueAsString(row.getCell(2));
+                        String dateValue = getCellValueAsString(row.getCell(3));
+
+                        if (countryName == null || holidayName == null || dateValue == null) continue;
+
+                        LocalDate holidayDate = parseDate(dateValue, formatters);
+                        if (holidayDate == null) continue;
+
+                        CountryCalendars holiday = new CountryCalendars();
+                        holiday.setCountryName(countryName.trim());
+                        holiday.setHolidayName(holidayName.trim());
+                        holiday.setHolidayDate(holidayDate);
+                        holiday.setCalendarYear(holidayDate.getYear());
+                        holiday.setHolidayDay(holidayDate.getDayOfWeek());
+
+                        holidays.add(holiday);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error reading Excel: " + e.getMessage());
+        }
+
+        return holidays;
+    }
+
+    private LocalDate parseDate(String dateValue, DateTimeFormatter[] formatters) {
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                return LocalDate.parse(dateValue.trim(), formatter);
+            } catch (Exception ignored) {}
+        }
+
+        try {
+            double numeric = Double.parseDouble(dateValue);
+            return LocalDate.of(1899, 12, 30).plusDays((long) numeric);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return null;
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            default -> null;
+        };
+    }
+
 	
 
 }
