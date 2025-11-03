@@ -1,24 +1,17 @@
 package com.smartleavemanagement.service;
 
 import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
-import org.apache.catalina.User;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -29,8 +22,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DateUtil;
+
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -38,14 +30,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.smartleavemanagement.DTOs.LeaveRequests;
 import com.smartleavemanagement.DTOs.LoginResponse;
-import com.smartleavemanagement.controller.UsersController;
 import com.smartleavemanagement.enums.LeaveStatus;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.CountryCalendars;
@@ -65,7 +54,6 @@ import com.smartleavemanagement.repository.UsersLeaveBalanceRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
 
-import jakarta.annotation.PostConstruct;
 
 import java.time.format.DateTimeFormatter;
 
@@ -74,7 +62,7 @@ import java.time.format.DateTimeFormatter;
 @Service
 public class AdminServiceImplementation implements AdminService{
 
-    private final UsersController usersController;
+    
 
     @Value("${file.url}")
     private String FILE_URL;
@@ -102,7 +90,7 @@ public class AdminServiceImplementation implements AdminService{
 	
 	public AdminServiceImplementation(AdminsRepository adminsRepository,JwtUtil jwtUtil,
 			RegistrationHistoryRepository registrationHistoryRepository, RolesRepository rolesRepository,
-			CountryCalendarsRepository countryCalendarsRepository, UsersController usersController,
+			CountryCalendarsRepository countryCalendarsRepository,
 			RoleBasedLeavesRepository roleBasedLeavesRepository,UsersRepository usersRepository,
 			UsersLeaveBalanceRepository usersLeaveBalanceRepository,
 			LeaveApplicationFormRepository leaveApplicationFormRepository)
@@ -113,7 +101,6 @@ public class AdminServiceImplementation implements AdminService{
 		this.registrationHistoryRepository=registrationHistoryRepository;
 		this.countryCalendarsRepository=countryCalendarsRepository;
 		this.rolesRepository = rolesRepository;
-		this.usersController = usersController;
 		this.roleBasedLeavesRepository=roleBasedLeavesRepository;
 		this.usersRepository=usersRepository;
 		this.usersLeaveBalanceRepository=usersLeaveBalanceRepository;
@@ -394,7 +381,7 @@ public class AdminServiceImplementation implements AdminService{
 	}
 	
 	public ResponseEntity<String> approveLeaveRequestByAdmin(int adminId, int leaveId, String token) {
-	    Users admin = usersRepository.findById(adminId).orElse(null);
+//	    Users admin = usersRepository.findById(adminId).orElse(null);
 //	    if (admin == null) {
 //	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can approve leave requests.");
 //	    }
@@ -583,6 +570,38 @@ public class AdminServiceImplementation implements AdminService{
 	}
 	
 	
+	
+	@Override
+	public ResponseEntity<String> updateDetails(int adminId, Admins admin, String token){
+		
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("You are not authorized to Update Admin Details!");
+	    }
+		
+	    Admins existingData = adminsRepository.findById(adminId).orElse(admin);
+	    if(existingData == null)
+	    {
+	    	return ResponseEntity.badRequest().body("Admin Not Found");
+	    }
+	    
+	    existingData.setFirstName(admin.getFirstName());
+	    existingData.setLastName(admin.getLastName());
+	    existingData.setEmail(admin.getEmail());
+	    existingData.setAddress(admin.getAddress());
+	    existingData.setGender(admin.getGender());
+	    existingData.setPhoneNumber(admin.getPhoneNumber());
+	    adminsRepository.save(existingData);
+	    
+	    
+		return ResponseEntity.ok("Successfully updated details.");
+	}
+	
+	
 	/*
 	 * 
 	 */
@@ -594,6 +613,11 @@ public class AdminServiceImplementation implements AdminService{
         List<CountryCalendars> excelHolidays = fetchHolidaysFromExcel(FILE_URL);
         List<CountryCalendars> dbHolidays = countryCalendarsRepository.findAll();
 
+        if(excelHolidays == null)
+        {
+        	return ResponseEntity.badRequest().body("Failed to load the data !");
+        }
+        
         Map<String, CountryCalendars> excelMap = toMap(excelHolidays);
         Map<String, CountryCalendars> dbMap = toMap(dbHolidays);
 
@@ -707,7 +731,7 @@ public class AdminServiceImplementation implements AdminService{
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Error reading Excel: " + e.getMessage());
+            System.err.println("Error reading Excel: " + e.getMessage());
         }
 
         return holidays;

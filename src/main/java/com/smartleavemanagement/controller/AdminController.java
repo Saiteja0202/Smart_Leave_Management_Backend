@@ -134,10 +134,19 @@ public class AdminController {
     	return adminService.deleteUser(adminId, userId, token);
     }
     
-    @PostMapping("/update-calendar/{adminId}")
+    @PutMapping("/update-calendar/{adminId}")
     public ResponseEntity<String> updateCalendar(@PathVariable int adminId)
     {
     	return adminService.syncHolidays();
     }
+    
+    @PutMapping("/update/{adminId}")
+    public ResponseEntity<String> updateDetails(@PathVariable int adminId,@RequestBody Admins admin,
+    		@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return adminService.updateDetails(adminId, admin, token);
+    }
+    
     
 }

@@ -8,17 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.hibernate.query.NativeQuery.ReturnableResultNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.smartleavemanagement.DTOs.LeaveRequests;
-import com.smartleavemanagement.DTOs.LeaveStartAndEndDates;
 import com.smartleavemanagement.enums.LeaveStatus;
 import com.smartleavemanagement.exceptions.InvalidLeaveDates;
 import com.smartleavemanagement.model.CountryCalendars;
