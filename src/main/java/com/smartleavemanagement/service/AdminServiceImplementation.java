@@ -36,6 +36,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -75,7 +76,9 @@ public class AdminServiceImplementation implements AdminService{
 
     private final UsersController usersController;
 
-
+    @Value("${file.url}")
+    private String FILE_URL;
+    
     private final RolesRepository rolesRepository;
 
 	private final AdminsRepository adminsRepository;
@@ -584,18 +587,12 @@ public class AdminServiceImplementation implements AdminService{
 	 * 
 	 */
 	
+	
 
-    private static final String FILE_URL =
-            "https://docs.google.com/spreadsheets/d/1nkOpL4L6J9mDw2tLaezeO8KZnXxwhauCed1JG5u6bq8/export?format=xlsx";
-
-    @Autowired
-    private CountryCalendarsRepository holidayRepository;
-
-    @PostConstruct
-    @Scheduled(cron = "0 */1 * * * *")
-    public void syncHolidays() {
+    @Override
+    public ResponseEntity<String> syncHolidays() {
         List<CountryCalendars> excelHolidays = fetchHolidaysFromExcel(FILE_URL);
-        List<CountryCalendars> dbHolidays = holidayRepository.findAll();
+        List<CountryCalendars> dbHolidays = countryCalendarsRepository.findAll();
 
         Map<String, CountryCalendars> excelMap = toMap(excelHolidays);
         Map<String, CountryCalendars> dbMap = toMap(dbHolidays);
@@ -611,7 +608,7 @@ public class AdminServiceImplementation implements AdminService{
             CountryCalendars dbHoliday = dbMap.get(key);
 
             if (excelHoliday != null && dbHoliday == null) {
-                holidayRepository.save(excelHoliday);
+            	countryCalendarsRepository.save(excelHoliday);
                 added++;
             } else if (excelHoliday != null && dbHoliday != null) {
                 if (!isSame(excelHoliday, dbHoliday)) {
@@ -619,17 +616,19 @@ public class AdminServiceImplementation implements AdminService{
                     dbHoliday.setHolidayDay(excelHoliday.getHolidayDay());
                     dbHoliday.setHolidayDate(excelHoliday.getHolidayDate());
                     dbHoliday.setHolidayName(excelHoliday.getHolidayName());
-                    holidayRepository.save(dbHoliday);
+                    countryCalendarsRepository.save(dbHoliday);
                     updated++;
                 }
             } else if (excelHoliday == null && dbHoliday != null) {
-                holidayRepository.delete(dbHoliday);
+            	countryCalendarsRepository.delete(dbHoliday);
                 deleted++;
             }
         }
-
-        System.out.printf("✅ Sync Complete | Added: %d | Updated: %d | Deleted: %d%n", added, updated, deleted);
+		return ResponseEntity.ok("Sync Complete | Added: "+ added+" | Updated: "+updated +" Deleted: "+ deleted);
+		
     }
+
+       
 
     private boolean isSame(CountryCalendars a, CountryCalendars b) {
         return a.getCountryName().equalsIgnoreCase(b.getCountryName())

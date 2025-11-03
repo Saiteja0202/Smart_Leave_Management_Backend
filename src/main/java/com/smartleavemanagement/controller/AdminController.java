@@ -134,5 +134,10 @@ public class AdminController {
     	return adminService.deleteUser(adminId, userId, token);
     }
     
+    @PostMapping("/update-calendar/{adminId}")
+    public ResponseEntity<String> updateCalendar(@PathVariable int adminId)
+    {
+    	return adminService.syncHolidays();
+    }
     
 }

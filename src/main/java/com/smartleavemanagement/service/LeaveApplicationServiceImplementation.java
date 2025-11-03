@@ -619,6 +619,4 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		
 		return ResponseEntity.ok("Canceled Leave");
 	}
-
-
 }
