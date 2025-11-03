@@ -133,18 +133,9 @@ public class UsersServiceImplementation implements UsersService {
 		registrationHistory.setUserId(user.getUserId());
 		registrationHistory.setRegisterDate(LocalDateTime.now());
 		registrationHistory.setRole(user.getUserRole());
-		
-		registrationHistoryRepository.save(registrationHistory);
-		
+
+		 registrationHistoryRepository.save(registrationHistory);
 		addRoleBasedLeavesToUsers(user.getUserId(),user.getUserRole());
-		
-		
-		
-		SimpleMailMessage message = new SimpleMailMessage();
-		message.setTo(user.getEmail());
-		message.setSubject("Registration Successfull");
-		message.setText("Thank you for registering"+"\n\n Your Username : "+user.getUserName()+"\n\n Your Role : "+user.getUserRole()+"\n\n "+"\n\nRegards,\nSmart Leave Management Team");
-		mailSender.send(message);	
 		return ResponseEntity.ok("User registered successfully");
 	}
 
