@@ -185,6 +185,8 @@ public class UsersServiceImplementation implements UsersService {
 		existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
 		existingUser.setAddress(updatedUser.getAddress());
 		existingUser.setGender(updatedUser.getGender());
+		existingUser.setCountryName(updatedUser.getCountryName());
+		
 
 		usersRepository.save(existingUser);
 		return ResponseEntity.ok("User details updated successfully");
@@ -211,12 +213,7 @@ public class UsersServiceImplementation implements UsersService {
 	        return ResponseEntity.status(403).body("You are not authorized to Generate OTP !");
 	    }
 	    
-	    
 
-	    
-	   
-	    
-	    
 	    int otp = (int)(Math.random() * 9000) + 1000;
 
 	    user.setOtp(otp);

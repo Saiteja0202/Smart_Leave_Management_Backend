@@ -30,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -56,6 +57,7 @@ import com.smartleavemanagement.securityconfiguration.JwtUtil;
 
 
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 
 
@@ -761,6 +763,64 @@ public class AdminServiceImplementation implements AdminService{
         };
     }
 
-	
+    
+    
+    
+    /*
+     * 
+     */
+    
+    @Scheduled(cron ="0 0 */1 * * *")
+    public String autoApprove() {
+        List<LeaveApplicationForm> listOfLeaveApplicationForm = leaveApplicationFormRepository.findAll();
+        LocalDate currentDate = LocalDate.now();
+        long autoApproveDurationInDays = 1;
+
+        for (LeaveApplicationForm singleLeaveApplicationForm : listOfLeaveApplicationForm) {
+            LocalDate appliedDate = singleLeaveApplicationForm.getAppliedDate();
+            if (appliedDate == null) continue;
+
+            long timeDiff = ChronoUnit.DAYS.between(appliedDate, currentDate);
+
+            if (singleLeaveApplicationForm.getLeaveStatus().equals(LeaveStatus.PENDING) &&
+                timeDiff >= autoApproveDurationInDays) {
+
+                System.out.println("Auto-approving leave with timeDiff: " + timeDiff);
+
+                UsersLeaveBalance singleUsersLeaveBalance = usersLeaveBalanceRepository
+                    .findByUser_UserId(singleLeaveApplicationForm.getUserId());
+
+                float duration = singleLeaveApplicationForm.getDuration();
+                String leaveType = singleLeaveApplicationForm.getLeaveType().toUpperCase();
+
+                switch (leaveType) {
+                    case "SICK":
+                        singleUsersLeaveBalance.setSickLeave(singleUsersLeaveBalance.getSickLeave() - duration);
+                        break;
+                    case "CASUAL":
+                        singleUsersLeaveBalance.setCasualLeave(singleUsersLeaveBalance.getCasualLeave() - duration);
+                        break;
+                    case "PATERNITY":
+                        singleUsersLeaveBalance.setPaternityLeave(singleUsersLeaveBalance.getPaternityLeave() - duration);
+                        break;
+                    case "MATERNITY":
+                        singleUsersLeaveBalance.setMaternityLeave(singleUsersLeaveBalance.getMaternityLeave() - duration);
+                        break;
+                    case "EARNED":
+                        singleUsersLeaveBalance.setEarnedLeave(singleUsersLeaveBalance.getEarnedLeave() - duration);
+                        break;
+                    default:
+                        return "Invalid leave type.";
+                }
+
+                singleUsersLeaveBalance.setTotalLeaves(singleUsersLeaveBalance.getTotalLeaves() - duration);
+                singleLeaveApplicationForm.setLeaveStatus(LeaveStatus.APPROVED);
+
+                usersLeaveBalanceRepository.save(singleUsersLeaveBalance);
+                leaveApplicationFormRepository.save(singleLeaveApplicationForm);
+            }
+        }
+        return "Successfully Auto Approved";
+    }
 
 }
