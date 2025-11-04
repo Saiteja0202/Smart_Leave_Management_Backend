@@ -3,6 +3,7 @@ package com.smartleavemanagement.model;
 import java.time.LocalDate;
 
 import com.smartleavemanagement.enums.LeaveStatus;
+import com.smartleavemanagement.enums.LeaveTypePlannedAndUnplanned;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +13,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 
 @Entity
 public class LeaveApplicationForm {
@@ -50,6 +55,9 @@ public class LeaveApplicationForm {
 	private float duration;
 
 	private LocalDate appliedDate;
+
+	@Enumerated(EnumType.STRING)
+	private LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned;
 
 	public int getLeaveId() {
 		return leaveId;
@@ -139,12 +147,26 @@ public class LeaveApplicationForm {
 		this.appliedDate = appliedDate;
 	}
 
+	public LeaveTypePlannedAndUnplanned getLeaveTypePlannedAndUnplanned() {
+		return leaveTypePlannedAndUnplanned;
+	}
+
+	public void setLeaveTypePlannedAndUnplanned(LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned) {
+		this.leaveTypePlannedAndUnplanned = leaveTypePlannedAndUnplanned;
+	}
+
+	public LeaveApplicationForm() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
 	public LeaveApplicationForm(int leaveId, int userId, String roleName,
 			@NotBlank(message = "Leave type is required") String leaveType,
 			@NotNull(message = "Start date is required") LocalDate startDate,
 			@NotNull(message = "Start date is required") LocalDate endDate,
 			@NotBlank(message = "Reason for leave is required") String comments, LeaveStatus leaveStatus,
-			String approver, float duration, LocalDate appliedDate) {
+			String approver, float duration, LocalDate appliedDate,
+			LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned) {
 		super();
 		this.leaveId = leaveId;
 		this.userId = userId;
@@ -157,13 +179,8 @@ public class LeaveApplicationForm {
 		this.approver = approver;
 		this.duration = duration;
 		this.appliedDate = appliedDate;
+		this.leaveTypePlannedAndUnplanned = leaveTypePlannedAndUnplanned;
 	}
-
-	public LeaveApplicationForm() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-	
 	
 	
 	

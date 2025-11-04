@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.smartleavemanagement.DTOs.LeaveRequests;
 import com.smartleavemanagement.enums.LeaveStatus;
+import com.smartleavemanagement.enums.LeaveTypePlannedAndUnplanned;
 import com.smartleavemanagement.exceptions.InvalidLeaveDates;
 import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.LeaveApplicationForm;
@@ -317,6 +318,17 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 	        newLeaveApplicationForm.setRoleName(user.getUserRole());
 	        newLeaveApplicationForm.setUserId(userId);
 	        newLeaveApplicationForm.setAppliedDate(LocalDate.now());
+	      
+	        if (leaveApplicationForm.getStartDate() != null) {
+	            long dayDiff = ChronoUnit.DAYS.between(LocalDate.now(), leaveApplicationForm.getStartDate());
+	            if (dayDiff >= 1) {
+	                newLeaveApplicationForm.setLeaveTypePlannedAndUnplanned(LeaveTypePlannedAndUnplanned.PLANNED);
+	            } else {
+	                newLeaveApplicationForm.setLeaveTypePlannedAndUnplanned(LeaveTypePlannedAndUnplanned.UNPLANNED);
+	            }
+	        }
+
+	        
 
 	        String approverRole;
 	        switch (user.getUserRole()) {
@@ -415,6 +427,9 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			newLeaveRequests.setLeaveId(userLeaveRequestsList.getLeaveId());
 			newLeaveRequests.setUserId(userLeaveRequestsList.getUserId());
 			newLeaveRequests.setUserRole(userLeaveRequestsList.getRoleName());
+			newLeaveRequests.setLeaveTypePlannedAndUnplanned(userLeaveRequestsList.getLeaveTypePlannedAndUnplanned());
+			
+			
 			newUserLeaveRequests.add(newLeaveRequests);
 		}
 		
