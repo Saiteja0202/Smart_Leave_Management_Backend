@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import com.smartleavemanagement.DTOs.LeaveRequests;
 import com.smartleavemanagement.DTOs.LoginResponse;
 import com.smartleavemanagement.enums.LeaveStatus;
+import com.smartleavemanagement.enums.LeaveTypePlannedAndUnplanned;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.LeaveApplicationForm;
@@ -375,6 +376,7 @@ public class AdminServiceImplementation implements AdminService{
 			newLeaveRequests.setDuration(singleUserLeavesRequests.getDuration());
 			newLeaveRequests.setApprover(singleUserLeavesRequests.getApprover());
 			newLeaveRequests.setLeaveStatus(singleUserLeavesRequests.getLeaveStatus());
+			newLeaveRequests.setLeaveTypePlannedAndUnplanned(singleUserLeavesRequests.getLeaveTypePlannedAndUnplanned());
 			allUsersLeavesRequestsList.add(newLeaveRequests);
 		}
 		
@@ -447,8 +449,8 @@ public class AdminServiceImplementation implements AdminService{
 	        return ResponseEntity.status(403).body("You are not authorized to Reject Leave!");
 	    }
 		
-	    Users admin = usersRepository.findById(adminId).orElse(null);
-	    if (admin == null || !"ADMIN".equalsIgnoreCase(admin.getUserRole())) {
+	    Admins admin = adminsRepository.findById(adminId).orElse(null);
+	    if (admin == null || !"ADMIN".equalsIgnoreCase(admin.getRole())) {
 	        return ResponseEntity.badRequest().body("Unauthorized access. Only ADMIN can reject leave requests.");
 	    }
 

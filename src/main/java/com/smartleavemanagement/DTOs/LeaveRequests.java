@@ -3,6 +3,7 @@ package com.smartleavemanagement.DTOs;
 import java.time.LocalDate;
 
 import com.smartleavemanagement.enums.LeaveStatus;
+import com.smartleavemanagement.enums.LeaveTypePlannedAndUnplanned;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,6 +31,8 @@ public class LeaveRequests {
 	private float duration;
 	
 	private String approver;
+
+	private LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned;
 
 	public int getLeaveId() {
 		return leaveId;
@@ -111,8 +114,17 @@ public class LeaveRequests {
 		this.approver = approver;
 	}
 
+	public LeaveTypePlannedAndUnplanned getLeaveTypePlannedAndUnplanned() {
+		return leaveTypePlannedAndUnplanned;
+	}
+
+	public void setLeaveTypePlannedAndUnplanned(LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned) {
+		this.leaveTypePlannedAndUnplanned = leaveTypePlannedAndUnplanned;
+	}
+
 	public LeaveRequests(int leaveId, String userName, int userId, String userRole, String leaveType,
-			LeaveStatus leaveStatus, LocalDate startDate, LocalDate endDate, float duration, String approver) {
+			LeaveStatus leaveStatus, LocalDate startDate, LocalDate endDate, float duration, String approver,
+			LeaveTypePlannedAndUnplanned leaveTypePlannedAndUnplanned) {
 		super();
 		this.leaveId = leaveId;
 		this.userName = userName;
@@ -124,12 +136,15 @@ public class LeaveRequests {
 		this.endDate = endDate;
 		this.duration = duration;
 		this.approver = approver;
+		this.leaveTypePlannedAndUnplanned = leaveTypePlannedAndUnplanned;
 	}
 
 	public LeaveRequests() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+	
+	
 	
 	
 	
