@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.smartleavemanagement.DTOs.LoginDetails;
+import com.smartleavemanagement.DTOs.PromotionRoleDTO;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.CountryCalendars;
 import com.smartleavemanagement.model.RoleBasedLeaves;
@@ -70,13 +71,13 @@ public class AdminController {
         return adminService.addNewLeavePolicies(adminId, roleBasedLeaves, token);
     }
 
-    @PutMapping("/promote/{adminId}/{userId}/{roleName}")
+    @PutMapping("/promote/{adminId}/{userId}")
     public ResponseEntity<String> promotionToUser(@PathVariable int adminId,
                                                   @PathVariable int userId,
-                                                  @PathVariable String roleName,
+                                                  @RequestBody PromotionRoleDTO promotionRoleDTO,
                                                   @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        return adminService.promotionToUser(adminId, userId, roleName, token);
+        return adminService.promotionToUser(adminId, userId, promotionRoleDTO.getNewRole(), token);
     }
 
     @PostMapping("/approve/{adminId}/{leaveId}")

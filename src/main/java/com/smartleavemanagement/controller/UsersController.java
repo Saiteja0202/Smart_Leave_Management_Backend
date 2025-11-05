@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginDetails;
+import com.smartleavemanagement.DTOs.PasswordUpdateRequest;
 import com.smartleavemanagement.DTOs.UserLeaveBalancedays;
 import com.smartleavemanagement.model.Users;
 import com.smartleavemanagement.repository.UsersRepository;
@@ -95,15 +96,20 @@ public class UsersController {
     @PutMapping("/update-password/{userId}")
     public ResponseEntity<String> updatePassword(
             @PathVariable int userId,
-            @RequestBody Map<String, String> payload,
+            @RequestBody PasswordUpdateRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
         String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        String oldPassword = payload.get("oldPassword");
-        String newPassword = payload.get("newPassword");
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+
+        if (oldPassword == null || newPassword == null || oldPassword.isEmpty() || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body("Password fields cannot be empty");
+        }
 
         return usersService.updatePassword(userId, oldPassword, newPassword, token);
     }
+
 
 
     @GetMapping("/get-user-details/{userId}")

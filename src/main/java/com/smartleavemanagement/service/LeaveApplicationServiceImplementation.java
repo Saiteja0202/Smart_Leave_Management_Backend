@@ -97,6 +97,32 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		        return ResponseEntity.badRequest().body("Start date or end date is missing.");
 		    }
 		 
+		 long validBackdatedDays = 0;
+		 LocalDate tempDate = startDate;
+
+		 while (tempDate.isBefore(currentDate)) {
+		     DayOfWeek day = tempDate.getDayOfWeek();
+		     boolean isHoliday = false;
+
+		     for (CountryCalendars holiday : allHolidays) {
+		         if (holiday.getHolidayDate().equals(tempDate)) {
+		             isHoliday = true;
+		             break;
+		         }
+		     }
+
+		     if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY && !isHoliday) {
+		         validBackdatedDays++;
+		     }
+
+		     tempDate = tempDate.plusDays(1);
+		 }
+
+		 if (startDate.isBefore(currentDate) || endDate.isBefore(currentDate)) {
+		     if (validBackdatedDays > 7) {
+		         return ResponseEntity.badRequest().body("You can only apply for leave within 7 valid days (excluding weekends and holidays) from today.");
+		     }
+		 }
 		 
 		 
 		 List<LeaveApplicationForm> newLeaveApplicationForms = leaveApplicationFormRepository.findByUserId(userId); 
@@ -111,9 +137,10 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 				 
 				 
 				 
-				 if((newLeaveApplicationForm.getStartDate() == date) || (newLeaveApplicationForm.getEndDate()==date))
+				 if((newLeaveApplicationForm.getStartDate().equals(date)) || (newLeaveApplicationForm.getEndDate().equals(date)))
 				 {
-					 if(newLeaveApplicationForm.getLeaveStatus().equals(LeaveStatus.PENDING))
+					 if(newLeaveApplicationForm.getLeaveStatus().equals(LeaveStatus.PENDING) ||
+							 newLeaveApplicationForm.getLeaveStatus().equals(LeaveStatus.APPROVED))
 					 {
 						 return ResponseEntity.badRequest().body("You cannot apply leave on same date that previously applied");
 					 }
@@ -125,11 +152,13 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		 }
 		 
 		 
+		 
+		 
 		
-		if(startDate.isBefore(currentDate) || endDate.isBefore(currentDate))
-		{
-			return ResponseEntity.badRequest().body("Select the valid dates");
-		}
+//		if(startDate.isBefore(currentDate) || endDate.isBefore(currentDate))
+//		{
+//			return ResponseEntity.badRequest().body("Select the valid dates");
+//		}
 		
 		if(startDay == DayOfWeek.SATURDAY || startDay == DayOfWeek.SUNDAY)
 		{
@@ -149,11 +178,11 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		
 		for(CountryCalendars holiday : allHolidays)
 		{
-			if(holiday.getHolidayDate() == startDate)
+			if(holiday.getHolidayDate().equals(startDate))
 			{
 				return ResponseEntity.badRequest().body("Start day should not start with Holiday !");
 			}
-			else if(holiday.getHolidayDate() == endDate)
+			else if(holiday.getHolidayDate().equals(endDate))
 			{
 				return ResponseEntity.badRequest().body("End day should not end with Holiday !");
 			}
@@ -216,11 +245,11 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		       
 		    }
 		
-		if(startDate.isBefore(currentDate) || endDate.isBefore(currentDate))
-		{
-			throw new InvalidLeaveDates("Select the valid dates.");
-			
-		}
+//		if(startDate.isBefore(currentDate) || endDate.isBefore(currentDate))
+//		{
+//			throw new InvalidLeaveDates("Select the valid dates.");
+//			
+//		}
 		 
 		if(startDay == DayOfWeek.SATURDAY || startDay == DayOfWeek.SUNDAY)
 		{
@@ -349,14 +378,14 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 	        newLeaveApplicationForm.setApprover(approverRole);
 	        leaveApplicationFormRepository.save(newLeaveApplicationForm);
 	        
-	        SimpleMailMessage message = new SimpleMailMessage();
-	        message.setTo(user.getEmail());
-	        message.setSubject("Successfully Applied Leave");
-	        message.setText("Your Leave Details : -"+"\n\n Leave type : "+newLeaveApplicationForm.getLeaveType()+
-	        		"\n Duration : "+newLeaveApplicationForm.getDuration()+"\n Start date : "+newLeaveApplicationForm.getStartDate()+
-	        		"\n End date : "+newLeaveApplicationForm.getEndDate()+"\n Leave Status : "+newLeaveApplicationForm.getLeaveStatus()+
-	        		"\n Approver : "+newLeaveApplicationForm.getApprover()+"\n\nRegards,\nSmart Leave Management Team");
-	        mailSender.send(message);
+//	        SimpleMailMessage message = new SimpleMailMessage();
+//	        message.setTo(user.getEmail());
+//	        message.setSubject("Successfully Applied Leave");
+//	        message.setText("Your Leave Details : -"+"\n\n Leave type : "+newLeaveApplicationForm.getLeaveType()+
+//	        		"\n Duration : "+newLeaveApplicationForm.getDuration()+"\n Start date : "+newLeaveApplicationForm.getStartDate()+
+//	        		"\n End date : "+newLeaveApplicationForm.getEndDate()+"\n Leave Status : "+newLeaveApplicationForm.getLeaveStatus()+
+//	        		"\n Approver : "+newLeaveApplicationForm.getApprover()+"\n\nRegards,\nSmart Leave Management Team");
+//	        mailSender.send(message);
 
 	        return ResponseEntity.ok("Successfully applied for leave, waiting for approval!");
 	    } catch (InvalidLeaveDates e) {
@@ -517,42 +546,73 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 					{
 					case "SICK":
 						leaveBalanceToDeduct = newUserLeaveBalance.getSickLeave();
-						newUserLeaveBalance.setSickLeave(leaveBalanceToDeduct-duration);
-						newUserLeaveBalance.setTotalLeaves(duration);
+						if(newUserLeaveBalance.getSickLeave() > 0.0f)
+						{
+							newUserLeaveBalance.setSickLeave(leaveBalanceToDeduct-duration);
+							newUserLeaveBalance.setTotalLeaves(duration);
+						}
+						else {
+							return ResponseEntity.badRequest().body("Insufficient Leave Balance.");
+						}
 						break;
 					case "CASUAL":
 						leaveBalanceToDeduct = newUserLeaveBalance.getCasualLeave();
-						newUserLeaveBalance.setCasualLeave(leaveBalanceToDeduct-duration);
-						newUserLeaveBalance.setTotalLeaves(duration);
+						if(newUserLeaveBalance.getCasualLeave() > 0.0f)
+						{
+							newUserLeaveBalance.setCasualLeave(leaveBalanceToDeduct-duration);
+							newUserLeaveBalance.setTotalLeaves(duration);
+						}
+						else{
+							return ResponseEntity.badRequest().body("Insufficient Leave Balance.");
+						}
 						break;
 					case "PATERNITY":
 						leaveBalanceToDeduct = newUserLeaveBalance.getPaternityLeave();
-						newUserLeaveBalance.setPaternityLeave(leaveBalanceToDeduct-duration);
-						newUserLeaveBalance.setTotalLeaves(duration);
+						if(newUserLeaveBalance.getPaternityLeave() > 0.0f)
+						{
+							newUserLeaveBalance.setPaternityLeave(leaveBalanceToDeduct-duration);
+							newUserLeaveBalance.setTotalLeaves(duration);
+						}
+						else {
+							return ResponseEntity.badRequest().body("Insufficient Leave Balance.");
+						}
 						break;
 					case "MATERNITY":
 						leaveBalanceToDeduct = newUserLeaveBalance.getMaternityLeave();
-						newUserLeaveBalance.setMaternityLeave(leaveBalanceToDeduct-duration);
-						newUserLeaveBalance.setTotalLeaves(duration);
+						if(newUserLeaveBalance.getMaternityLeave() > 0.0f)
+						{
+							newUserLeaveBalance.setMaternityLeave(leaveBalanceToDeduct-duration);
+							newUserLeaveBalance.setTotalLeaves(duration);
+						}
+						else {
+							return ResponseEntity.badRequest().body("Insufficient Leave Balance.");
+						}
 						break;
 					case "EARNED":
 						leaveBalanceToDeduct = newUserLeaveBalance.getEarnedLeave();
-						newUserLeaveBalance.setEarnedLeave(leaveBalanceToDeduct-duration);
-						newUserLeaveBalance.setTotalLeaves(duration);
+						if(newUserLeaveBalance.getEarnedLeave() > 0.0f)
+						{
+							newUserLeaveBalance.setEarnedLeave(leaveBalanceToDeduct-duration);
+							newUserLeaveBalance.setTotalLeaves(duration);
+						}
+						else {
+							return ResponseEntity.badRequest().body("Insufficient Leave Balance.");
+						}
+						
 						break;
 					 default:
 			                return ResponseEntity.badRequest().body("Invalid leave type.");
 					}
 					usersLeaveBalanceRepository.save(newUserLeaveBalance);
 					leaveApplicationFormRepository.save(singleNewLeaveApplicationForm);
-					SimpleMailMessage message = new SimpleMailMessage();
-					message.setTo(user.getEmail());
-					message.setSubject("Leave Approved");
-					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
-							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
-							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
-							"\n\nRegards,\nSmart Leave Management Team");
-					mailSender.send(message);
+//					SimpleMailMessage message = new SimpleMailMessage();
+//					message.setTo(user.getEmail());
+//					message.setSubject("Leave Approved");
+//					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
+//							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
+//							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
+//							"\n\nRegards,\nSmart Leave Management Team");
+//					mailSender.send(message);
 				}
 			}
 			
@@ -586,14 +646,14 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 				{
 					singleNewLeaveApplicationForm.setLeaveStatus(LeaveStatus.REJECTED);
 					leaveApplicationFormRepository.save(singleNewLeaveApplicationForm);
-					SimpleMailMessage message = new SimpleMailMessage();
-					message.setTo(user.getEmail());
-					message.setSubject("Leave Rejected");
-					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
-							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
-							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
-							"\n\nRegards,\nSmart Leave Management Team");
-					mailSender.send(message);
+//					SimpleMailMessage message = new SimpleMailMessage();
+//					message.setTo(user.getEmail());
+//					message.setSubject("Leave Rejected");
+//					message.setText("Leave Details : "+"\n\n Leave Type : "+singleNewLeaveApplicationForm.getLeaveType()+
+//							"\n Duration : "+singleNewLeaveApplicationForm.getDuration()+"\n Leave Status : "+singleNewLeaveApplicationForm.getLeaveStatus()+
+//							"\n Start Date : "+ singleNewLeaveApplicationForm.getStartDate()+"\n End Date : "+singleNewLeaveApplicationForm.getEndDate()+
+//							"\n\nRegards,\nSmart Leave Management Team");
+//					mailSender.send(message);
 				}
 			}
 		}
@@ -630,5 +690,6 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		}
 		
 		return ResponseEntity.ok("Canceled Leave");
+		
 	}
 }
