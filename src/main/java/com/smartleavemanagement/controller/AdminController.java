@@ -9,10 +9,12 @@ import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.DTOs.PromotionRoleDTO;
 import com.smartleavemanagement.model.Admins;
 import com.smartleavemanagement.model.CountryCalendars;
+import com.smartleavemanagement.model.RegistrationHistory;
 import com.smartleavemanagement.model.RoleBasedLeaves;
 import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.model.Users;
 import com.smartleavemanagement.repository.AdminsRepository;
+import com.smartleavemanagement.repository.RegistrationHistoryRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.service.AdminService;
 
@@ -23,11 +25,14 @@ public class AdminController {
     private final AdminService adminService;
     private final UsersRepository usersRepository;
     private final AdminsRepository adminsRepository;
+    private final RegistrationHistoryRepository registrationHistoryRepository;
 
-    public AdminController(AdminService adminService, UsersRepository usersRepository, AdminsRepository adminsRepository) {
+    public AdminController(AdminService adminService, UsersRepository usersRepository, AdminsRepository adminsRepository,
+    		RegistrationHistoryRepository registrationHistoryRepository) {
         this.adminService = adminService;
         this.usersRepository = usersRepository;
         this.adminsRepository = adminsRepository;
+        this.registrationHistoryRepository=registrationHistoryRepository;
     }
 
     @PostMapping("/registration")
@@ -149,6 +154,13 @@ public class AdminController {
     	return adminService.updateDetails(adminId, admin, token);
     }
     
+    
+    @GetMapping("/get-registration-history")
+    public ResponseEntity<List<RegistrationHistory>> getRegistrationHistory()
+    {
+    	List<RegistrationHistory> allRegistrations = registrationHistoryRepository.findAll();
+    	return ResponseEntity.ok(allRegistrations);
+    }
     
     
     
