@@ -193,25 +193,14 @@ public class UsersServiceImplementation implements UsersService {
 	}
 	
 	@Override
-	public ResponseEntity<String> generateOtp(String email, String context,String token) {
-		
-		
-	    
+	public ResponseEntity<String> generateOtp(String email, String context) {
+	
 	    
 	    Optional<Users> optionalUser = usersRepository.findByEmail(email);
 	    if (optionalUser.isEmpty()) {
 	        return ResponseEntity.status(404).body("User not found");
 	    }
 	    Users user = optionalUser.get();
-	    
-	    if (!jwtUtil.validateToken(token)) {
-	        return ResponseEntity.status(401).body("Invalid or expired token");
-	    }
-
-	    Long tokenUserId = jwtUtil.extractUserId(token);
-	    if (tokenUserId == null || tokenUserId != user.getUserId()) {
-	        return ResponseEntity.status(403).body("You are not authorized to Generate OTP !");
-	    }
 	    
 
 	    int otp = (int)(Math.random() * 9000) + 1000;
@@ -230,18 +219,11 @@ public class UsersServiceImplementation implements UsersService {
 	    return ResponseEntity.ok("OTP generated and sent to email");
 	}
 	@Override
-	public ResponseEntity<String> verifyOtp(int otp, String context,String token) {
+	public ResponseEntity<String> verifyOtp(int otp, String context) {
 	    Users user = usersRepository.findByOtp(otp).orElse(null);
 	    
 	    
-	    if (!jwtUtil.validateToken(token)) {
-	        return ResponseEntity.status(401).body("Invalid or expired token");
-	    }
-
-	    Long tokenUserId = jwtUtil.extractUserId(token);
-	    if (tokenUserId == null || tokenUserId != user.getUserId()) {
-	        return ResponseEntity.status(403).body("You are not authorized to Calculate the duration !");
-	    }
+	    
 	    
 	    if (user == null) {
 	        return ResponseEntity.badRequest().body("Wrong OTP");
@@ -259,7 +241,7 @@ public class UsersServiceImplementation implements UsersService {
 	    if (context.equalsIgnoreCase("username")) {
 	        return ResponseEntity.ok("Username: " + user.getUserName());
 	    } else {
-	        return ResponseEntity.ok("Email verified successfully");
+	        return ResponseEntity.ok("UserId : "+user.getUserId());
 	    }
 	}
 
@@ -376,15 +358,8 @@ public class UsersServiceImplementation implements UsersService {
 	}
 	
 	@Override
-	public ResponseEntity<String> updateNewPassword(int userId,String newPassword, String token) {
-	    if (!jwtUtil.validateToken(token)) {
-	        return ResponseEntity.status(401).body("Invalid or expired token");
-	    }
-
-	    Long tokenUserId = jwtUtil.extractUserId(token);
-	    if (tokenUserId == null || tokenUserId != userId) {
-	        return ResponseEntity.status(403).body("You are not authorized to update this user's password");
-	    }
+	public ResponseEntity<String> updateNewPassword(int userId,String newPassword) {
+	  
 
 	    Users user = usersRepository.findById(userId).orElse(null);
 	    if (user == null) {
