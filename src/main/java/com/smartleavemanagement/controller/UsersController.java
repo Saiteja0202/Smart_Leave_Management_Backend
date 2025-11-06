@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.smartleavemanagement.DTOs.ForgotDetails;
 import com.smartleavemanagement.DTOs.HolidayCalendar;
 import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.DTOs.PasswordUpdateRequest;
@@ -52,45 +53,40 @@ public class UsersController {
 
     @PostMapping("/forgot-password/generate-otp")
     public ResponseEntity<String> generateOtpForPassword(
-            @RequestBody Map<String, String> payload,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ForgotDetails forgotDetails) {
 
-        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        String email = payload.get("email");
-        return usersService.generateOtp(email, "password", token);
+       
+        String email = forgotDetails.getEmail();
+        return usersService.generateOtp(email, "password");
     }
 
 
     @PostMapping("/forgot-username/generate-otp")
     public ResponseEntity<String> generateOtpForUsername(
-            @RequestBody Map<String, String> payload,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ForgotDetails forgotDetails) {
 
-        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        String email = payload.get("email");
-        return usersService.generateOtp(email, "username", token);
+
+    	 String email = forgotDetails.getEmail();
+        return usersService.generateOtp(email, "username");
     }
 
 
     @PostMapping("/forgot-password/verify-otp")
     public ResponseEntity<String> verifyOtpForPassword(
-            @RequestBody Map<String, String> payload,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ForgotDetails forgotDetails) {
 
-        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        int otp = Integer.parseInt(payload.get("otp"));
-        return usersService.verifyOtp(otp, "password", token);
+        int otp = forgotDetails.getOtp();
+        return usersService.verifyOtp(otp, "password");
     }
 
 
     @PostMapping("/forgot-username/verify-otp")
     public ResponseEntity<?> verifyOtpForUsername(
-            @RequestBody Map<String, String> payload,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ForgotDetails forgotDetails) {
 
-        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        int otp = Integer.parseInt(payload.get("otp"));
-        return usersService.verifyOtp(otp, "username", token);
+       
+    	 int otp = forgotDetails.getOtp();
+        return usersService.verifyOtp(otp, "username");
     }
 
     @PutMapping("/update-password/{userId}")
@@ -132,13 +128,12 @@ public class UsersController {
     @PutMapping("/update-new-password/{userId}")
     public ResponseEntity<String> updateNewPassword(
             @PathVariable int userId,
-            @RequestBody String payLoad,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestBody ForgotDetails forgotDetails) {
 
-        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        String newPassword = payLoad;
 
-        return usersService.updateNewPassword(userId, newPassword, token);
+        String newPassword = forgotDetails.getNewPassword();
+
+        return usersService.updateNewPassword(userId, newPassword);
     }
     
     

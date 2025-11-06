@@ -15,9 +15,9 @@ public interface UsersService {
 
     ResponseEntity<String> updateUserDetails(int userId, Users updatedUser, String token);
 
-    ResponseEntity<String> generateOtp(String email, String context, String token);
+    ResponseEntity<String> generateOtp(String email, String context);
 
-    ResponseEntity<String> verifyOtp(int otp, String context, String token);
+    ResponseEntity<String> verifyOtp(int otp, String context);
 
     ResponseEntity<String> updatePassword(int userId, String oldPassword, String newPassword, String token);
 
@@ -27,7 +27,7 @@ public interface UsersService {
     
     ResponseEntity<String> deleteAccount(int userId, String token);
 
-    ResponseEntity<String> updateNewPassword(int userId, String newPassword, String token);
+    ResponseEntity<String> updateNewPassword(int userId, String newPassword);
     
     ResponseEntity<List<String>> getAllCountriesForUsers();
 }
