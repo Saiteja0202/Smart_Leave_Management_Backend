@@ -207,12 +207,18 @@ public class Users {
 	public void setOtpStatus(OtpStatus otpStatus) {
 		this.otpStatus = otpStatus;
 	}
-	
-	
+
 	@Override
-    public String toString()
-    {
-    	return role.getRoleName();
-    }
+	public String toString() {
+		return "Users [userId=" + userId + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
+				+ ", phoneNumber=" + phoneNumber + ", address=" + address + ", gender=" + gender + ", userName="
+				+ userName + ", password=" + password + ", role=" + role + ", userRole=" + userRole + ", otp=" + otp
+				+ ", otpStatus=" + otpStatus + ", countryName=" + countryName + "]";
+	}
+	
+	
+	
+	
+	
 
 }

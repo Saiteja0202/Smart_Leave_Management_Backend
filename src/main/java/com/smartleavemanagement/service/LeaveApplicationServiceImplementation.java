@@ -494,17 +494,19 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 
 	    List<LeaveRequests> filteredRequests = allUsersLeaveRequests.stream()
 	        .filter(form -> viewableRoles.contains(form.getRoleName()))
-	        .map(form -> mapToLeaveRequest(form, user.getUserName()))
+	        .map(form -> mapToLeaveRequest(form,form.getUserId()))
 	        .collect(Collectors.toList());
 
 	    return filteredRequests;
 	}
 
-	private LeaveRequests mapToLeaveRequest(LeaveApplicationForm form, String userName) {
+	private LeaveRequests mapToLeaveRequest(LeaveApplicationForm form, int userId) {
+		Users user = usersRepository.findById(form.getUserId()).orElse(null);
+		System.out.println(user.toString());
 	    LeaveRequests request = new LeaveRequests();
-	    request.setUserName(userName);
+	    request.setUserName(user.getFirstName());
 	    request.setLeaveId(form.getLeaveId());
-	    request.setUserId(form.getUserId());
+	    request.setUserId(user.getUserId());
 	    request.setUserRole(form.getRoleName());
 	    request.setLeaveType(form.getLeaveType());
 	    request.setStartDate(form.getStartDate());
