@@ -1,5 +1,6 @@
 package com.smartleavemanagement.model;
 
+import com.smartleavemanagement.enums.AdminStatus;
 import com.smartleavemanagement.enums.Gender;
 
 import jakarta.persistence.Column;
@@ -56,6 +57,21 @@ public class Admins {
 
     @NotBlank(message = "Role is Required")
     private String role;
+    
+    @Column(name="admin_status")
+    @Enumerated(EnumType.STRING)
+    private AdminStatus adminStatus;
+   
+   
+
+
+	public AdminStatus getAdminStatus() {
+		return adminStatus;
+	}
+
+	public void setAdminStatus(AdminStatus adminStatus) {
+		this.adminStatus = adminStatus;
+	}
 
 	public Admins() {
 		super();
@@ -70,7 +86,8 @@ public class Admins {
 			@NotNull(message = "Gender is required") Gender gender,
 			@NotBlank(message = "Username is required") String userName,
 			@NotBlank(message = "Password is required") String password,
-			@NotBlank(message = "Role is Required") String role) {
+			@NotBlank(message = "Role is Required") String role,
+			AdminStatus adminStatus) {
 		super();
 		this.adminId = adminId;
 		this.firstName = firstName;
@@ -82,6 +99,7 @@ public class Admins {
 		this.userName = userName;
 		this.password = password;
 		this.role = role;
+		this.adminStatus=adminStatus;
 	}
 
 	public int getAdminId() {

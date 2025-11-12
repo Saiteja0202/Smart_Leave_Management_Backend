@@ -86,4 +86,13 @@ public class LeaveApplicationController {
         String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
         return leaveApplicationService.cancelLeave(userId, leaveId,token);
     }
+    
+    
+    @GetMapping("/get-all-users-leave-balance/{userId}")
+    public ResponseEntity<?> getAllUserLeaveBalance(@PathVariable int userId, 
+    		@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return leaveApplicationService.getAllUserLeaveBalance(userId,token);
+    }
 }

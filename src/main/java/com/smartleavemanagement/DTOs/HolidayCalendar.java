@@ -12,6 +12,8 @@ public class HolidayCalendar {
 	private LocalDate holidayDate;
 	
 	private String countryName;
+	
+	private String cityName;
 
 	public String getHolidayName() {
 		return holidayName;
@@ -45,18 +47,30 @@ public class HolidayCalendar {
 		this.countryName = countryName;
 	}
 
-	public HolidayCalendar(String holidayName, DayOfWeek hoilydayDay, LocalDate holidayDate, String countryName) {
+	public String getCityName() {
+		return cityName;
+	}
+
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
+	}
+
+	public HolidayCalendar(String holidayName, DayOfWeek hoilydayDay, LocalDate holidayDate, String countryName,
+			String cityName) {
 		super();
 		this.holidayName = holidayName;
 		this.hoilydayDay = hoilydayDay;
 		this.holidayDate = holidayDate;
 		this.countryName = countryName;
+		this.cityName = cityName;
 	}
 
 	public HolidayCalendar() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+
+	
 	
 	
 

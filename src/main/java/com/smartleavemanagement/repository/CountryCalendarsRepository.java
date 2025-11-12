@@ -18,4 +18,9 @@ public interface CountryCalendarsRepository extends JpaRepository<CountryCalenda
 
     @Query("SELECT c FROM CountryCalendars c WHERE c.countryName = :countryName AND c.holidayDate = :holidayDate AND c.holidayName = :holidayName")
     Optional<CountryCalendars> findExistingHoliday(String countryName, LocalDate holidayDate, String holidayName);
+    
+    @Query("SELECT c FROM CountryCalendars c WHERE c.cityName = :cityName AND c.holidayDate = :holidayDate")
+    Optional<CountryCalendars> findExistingHolidayByCityAndDate(String cityName, LocalDate holidayDate);
+    
+    Optional<CountryCalendars> findByHolidayId(int holidayId);
 }

@@ -22,4 +22,6 @@ public interface LeaveApplicationService {
     ResponseEntity<String> rejectLeaveRequest(int userId, int requesterId, String token);
 
     ResponseEntity<String> cancelLeave(int userId, int leaveId, String token);
+    
+    ResponseEntity<?> getAllUserLeaveBalance(int userId,String token);
 }

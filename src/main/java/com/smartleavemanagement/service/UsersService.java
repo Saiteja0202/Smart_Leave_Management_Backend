@@ -30,4 +30,6 @@ public interface UsersService {
     ResponseEntity<String> updateNewPassword(int userId, String newPassword);
     
     ResponseEntity<List<String>> getAllCountriesForUsers();
+    
+    ResponseEntity<List<String>> getAllCities(String countryName);
 }
