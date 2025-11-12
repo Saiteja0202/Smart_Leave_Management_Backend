@@ -149,4 +149,10 @@ public class UsersController {
     public ResponseEntity<List<String>> getAllCountriesForUsers() {
         return usersService.getAllCountriesForUsers();
     }
+    
+    @GetMapping("/get-all-cities/{countryName}")
+    public ResponseEntity<List<String>> getAllCities(@PathVariable String countryName)
+    {
+    	return usersService.getAllCities(countryName);
+    }
 }

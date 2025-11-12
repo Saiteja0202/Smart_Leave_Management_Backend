@@ -2,6 +2,9 @@ package com.smartleavemanagement.DTOs;
 
 public class UserLeaveBalancedays {
 	
+	private String firstName;
+	
+	private String lastName;
 	
 	private float sickLeave;
 	
@@ -16,6 +19,24 @@ public class UserLeaveBalancedays {
 	private float maternityLeave;
 	
 	private float totalLeaves;
+
+	
+	
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
 
 	public float getSickLeave() {
 		return sickLeave;
@@ -74,7 +95,7 @@ public class UserLeaveBalancedays {
 	}
 
 	public UserLeaveBalancedays(float sickLeave, float casualLeave, float lossOfPay, float earnedLeave,
-			float paternityLeave, float maternityLeave, float totalLeaves) {
+			float paternityLeave, float maternityLeave, float totalLeaves,String firstName,String lastName) {
 		super();
 		this.sickLeave = sickLeave;
 		this.casualLeave = casualLeave;
@@ -83,6 +104,8 @@ public class UserLeaveBalancedays {
 		this.paternityLeave = paternityLeave;
 		this.maternityLeave = maternityLeave;
 		this.totalLeaves = totalLeaves;
+		this.firstName=firstName;
+		this.lastName=lastName;
 	}
 
 	public UserLeaveBalancedays() {

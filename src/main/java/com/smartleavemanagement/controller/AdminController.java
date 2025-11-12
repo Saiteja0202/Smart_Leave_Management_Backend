@@ -1,9 +1,11 @@
 package com.smartleavemanagement.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.smartleavemanagement.DTOs.LoginDetails;
 import com.smartleavemanagement.DTOs.PromotionRoleDTO;
@@ -13,6 +15,7 @@ import com.smartleavemanagement.model.RegistrationHistory;
 import com.smartleavemanagement.model.RoleBasedLeaves;
 import com.smartleavemanagement.model.Roles;
 import com.smartleavemanagement.model.Users;
+import com.smartleavemanagement.model.UsersLeaveBalance;
 import com.smartleavemanagement.repository.AdminsRepository;
 import com.smartleavemanagement.repository.RegistrationHistoryRepository;
 import com.smartleavemanagement.repository.UsersRepository;
@@ -64,6 +67,7 @@ public class AdminController {
                 countryCalendars.getCalendarYear(),
                 countryCalendars.getHolidayName(),
                 countryCalendars.getHolidayDate(),
+                countryCalendars.getCityName(),
                 token
         );
     }
@@ -140,11 +144,7 @@ public class AdminController {
     	return adminService.deleteUser(adminId, userId, token);
     }
     
-    @PutMapping("/update-calendar/{adminId}")
-    public ResponseEntity<String> updateCalendar(@PathVariable int adminId)
-    {
-    	return adminService.syncHolidays();
-    }
+   
     
     @PutMapping("/update/{adminId}")
     public ResponseEntity<String> updateDetails(@PathVariable int adminId,@RequestBody Admins admin,
@@ -162,7 +162,38 @@ public class AdminController {
     	return ResponseEntity.ok(allRegistrations);
     }
     
+    @GetMapping("/get-all-leave-balance/{adminId}")
+    public ResponseEntity<?> getAllLeaveBalance(@PathVariable int adminId, 
+    		@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return adminService.getAllLeaveBalance(adminId, token);
+    }
     
+  
+    @PostMapping("/upload-calendar/{adminId}")
+    public ResponseEntity<?> uploadCalendar(@PathVariable int adminId,
+    		@RequestParam("file") MultipartFile file,
+    		@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return adminService.uploadCalendar(adminId, file, token);
+    }
+
+    @PostMapping("/update-calendar/{adminId}")
+    public ResponseEntity<?> updateCalendar(@PathVariable int adminId,
+                                            @RequestBody List<Map<String, Object>> holidays,
+                                            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        return adminService.updateCalendar(adminId, holidays, token);
+    }
     
-    
+    @PutMapping("/update-single-holiday/{adminId}/{holidayId}")
+    public ResponseEntity<?> updateSingleHoliday(@PathVariable int adminId,
+    		@PathVariable int holidayId,
+    		@RequestBody CountryCalendars countryCalendars,@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        return adminService.updateSingleHoliday(adminId,holidayId, countryCalendars, token);
+    }
 }

@@ -42,7 +42,8 @@ public class CountryCalendars {
 	@Column(name = "holiday_day")
 	private DayOfWeek holidayDay;
 	
-	
+	@NotBlank(message = "City Name is required")
+	private String cityName;
 	
 	
 	@NotBlank(message = "Holiday Name is required")
@@ -55,13 +56,13 @@ public class CountryCalendars {
 
 	public CountryCalendars(int holidayId, @NotBlank(message = "Country name is required") String countryName,
 			@NotNull(message = "Calendar year is required") int calendarYear, LocalDate holidayDate,
-			 String holidayName) {
+			 String holidayName,String cityName) {
 		super();
 		this.holidayId = holidayId;
 		this.countryName = countryName;
 		this.calendarYear = calendarYear;
 		this.holidayDate = holidayDate;
-	
+		this.cityName = cityName;
 		this.holidayName = holidayName;
 	}
 
@@ -111,6 +112,14 @@ public class CountryCalendars {
 
 	public void setHolidayDay(DayOfWeek holidayDay) {
 		this.holidayDay = holidayDay;
+	}
+
+	public String getCityName() {
+		return cityName;
+	}
+
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
 	}
 
 	
