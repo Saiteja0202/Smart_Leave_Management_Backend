@@ -24,9 +24,8 @@ public class Users {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @NotNull(message = "Phone number is required")
-    @Min(value = 1000000000L, message = "Phone number must be at least 10 digits")
-    private Long phoneNumber;
+    @NotBlank(message = "Phone number is required")
+    private String phoneNumber;
 
     @NotBlank(message = "Address is required")
     private String address;
@@ -48,7 +47,8 @@ public class Users {
     
     private String userRole;
     
-    
+    @NotBlank(message = "City name is required")
+    private String cityName;
 
     public String getUserRole() {
 		return userRole;
@@ -89,15 +89,24 @@ public class Users {
     
     
 
+	public String getCityName() {
+		return cityName;
+	}
+
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
+	}
+
 	public Users(int userId, @NotBlank(message = "First name is required") String firstName,
 			@NotBlank(message = "Last name is required") String lastName,
 			@Email(message = "Email should be valid") @NotBlank(message = "Email is required") String email,
-			@NotNull(message = "Phone number is required") @Min(value = 1000000000, message = "Phone number must be at least 10 digits") Long phoneNumber,
+			@NotNull(message = "Phone number is required") @Min(value = 1000000000, message = "Phone number must be at least 10 digits") String phoneNumber,
 			@NotBlank(message = "Address is required") String address,
 			@NotNull(message = "Gender is required") Gender gender,
 			@NotBlank(message = "Username is required") String userName,
 			@NotBlank(message = "Password is required") String password,
-			@NotBlank(message = "Country name is required") String countryName) {
+			@NotBlank(message = "Country name is required") String countryName,
+			@NotBlank(message = "City name is required") String cityName) {
 		super();
 		this.userId = userId;
 		this.firstName = firstName;
@@ -109,6 +118,7 @@ public class Users {
 		this.userName = userName;
 		this.password = password;
 		this.countryName=countryName;
+		this.cityName=cityName;
 		
 	}
 
@@ -144,11 +154,11 @@ public class Users {
 		this.email = email;
 	}
 
-	public Long getPhoneNumber() {
+	public String getPhoneNumber() {
 		return phoneNumber;
 	}
 
-	public void setPhoneNumber(Long phoneNumber) {
+	public void setPhoneNumber(String phoneNumber) {
 		this.phoneNumber = phoneNumber;
 	}
 
@@ -212,9 +222,10 @@ public class Users {
 	public String toString() {
 		return "Users [userId=" + userId + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
 				+ ", phoneNumber=" + phoneNumber + ", address=" + address + ", gender=" + gender + ", userName="
-				+ userName + ", password=" + password + ", role=" + role + ", userRole=" + userRole + ", otp=" + otp
-				+ ", otpStatus=" + otpStatus + ", countryName=" + countryName + "]";
+				+ userName + ", password=" + password + ", role=" + role + ", userRole=" + userRole + ", cityName="
+				+ cityName + ", otp=" + otp + ", otpStatus=" + otpStatus + ", countryName=" + countryName + "]";
 	}
+
 	
 	
 	

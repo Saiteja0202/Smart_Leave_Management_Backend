@@ -804,4 +804,38 @@ public class AdminServiceImplementation implements AdminService {
 		return ResponseEntity.ok("Updated Holiday !");
 	}
 	
+	
+	
+	public ResponseEntity<String> updateLeavePloicy(int adminId,int roleBasedLeaveId,RoleBasedLeaves roleBasedLeaves,String token){
+		if (!jwtUtil.validateToken(token)) {
+	        return ResponseEntity.status(401).body("Invalid or expired token");
+	    }
+
+	    Long tokenUserId = jwtUtil.extractUserId(token);
+	    if (tokenUserId == null || tokenUserId != adminId) {
+	        return ResponseEntity.status(403).body("Not authorized");
+	    }
+
+	    Admins admin = adminsRepository.findById(adminId).orElse(null);
+	    if (admin == null) {
+	        return ResponseEntity.status(404).body("User not found");
+	    }
+		
+		RoleBasedLeaves existingRoleBasedLeaves = roleBasedLeavesRepository.findByRoleBasedLeaveId(roleBasedLeaveId).orElse(null);
+		
+		existingRoleBasedLeaves.setCasualLeave(roleBasedLeaves.getCasualLeave());
+		existingRoleBasedLeaves.setEarnedLeave(roleBasedLeaves.getEarnedLeave());
+		existingRoleBasedLeaves.setMaternityLeave(roleBasedLeaves.getMaternityLeave());
+		existingRoleBasedLeaves.setPaternityLeave(roleBasedLeaves.getPaternityLeave());
+		existingRoleBasedLeaves.setSickLeave(roleBasedLeaves.getSickLeave());
+		
+		existingRoleBasedLeaves.setTotalLeaves((roleBasedLeaves.getCasualLeave()+roleBasedLeaves.getEarnedLeave()+
+				roleBasedLeaves.getMaternityLeave()+roleBasedLeaves.getPaternityLeave()+roleBasedLeaves.getSickLeave()));
+		
+		roleBasedLeavesRepository.save(existingRoleBasedLeaves);
+		
+		return ResponseEntity.ok("Updated Leave Policies ! Current leave balance for users will update at start of next year");
+		
+	}
+	
 }

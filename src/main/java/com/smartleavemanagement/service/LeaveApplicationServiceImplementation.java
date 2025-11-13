@@ -78,7 +78,7 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			return ResponseEntity.status(403).body("You are not authorized to Calculate the duration !");
 		}
 
-		List<CountryCalendars> allHolidays = countryCalendarsRepository.findAllByCountryName(user.getCountryName());
+		List<CountryCalendars> allHolidays = countryCalendarsRepository.findAllByCityName(user.getCountryName());
 
 		LocalDate currentDate = LocalDate.now();
 
@@ -89,6 +89,11 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 			return ResponseEntity.badRequest().body("Start date or end date is missing.");
 		}
 
+		if(startDate.getYear() != currentDate.getYear() || endDate.getYear() != currentDate.getYear())
+		{
+			return ResponseEntity.badRequest().body("Start date or End date should be in this current year.");
+		}
+		
 		long validBackdatedDays = 0;
 		LocalDate tempDate = startDate;
 
@@ -386,11 +391,16 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 
 		Users user = userRepository.findById(userId).orElse(null);
 
+		if (user == null) {
+			return ResponseEntity.badRequest().body("user Not Found !");
+		}
+		
 		List<LeaveApplicationForm> userLeaveRequests = leaveApplicationFormRepository.findByUserId(userId);
 
 		if (userLeaveRequests == null) {
 			return ResponseEntity.badRequest().body("Leave requests are Not Found !");
 		}
+		
 		ArrayList<LeaveRequests> newUserLeaveRequests = new ArrayList<>();
 		for (LeaveApplicationForm userLeaveRequestsList : userLeaveRequests) {
 

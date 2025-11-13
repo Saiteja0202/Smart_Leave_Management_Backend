@@ -103,14 +103,21 @@ public class UsersServiceImplementation implements UsersService {
 		}
 
 		List<CountryCalendars> calendars = countryCalendarsRepository.findByCountryName(user.getCountryName());
-
+		
 		if (calendars.isEmpty()) {
 			return ResponseEntity.status(400).body("Country calendar not found");
 		}
 
+		List<CountryCalendars> calendarsCity = countryCalendarsRepository.findByCityName(user.getCityName());
+
+		if (calendarsCity.isEmpty()) {
+			return ResponseEntity.status(400).body("Country calendar not found");
+		}
+		
 		CountryCalendars assignedCountryCalendar = calendars.get(0);
 		user.setCountryName(assignedCountryCalendar.getCountryName());
-
+		CountryCalendars assignedCountryCalendarCity = calendarsCity.get(0);
+		user.setCityName(assignedCountryCalendarCity.getCityName());
 		user.setRole(assignedRole);
 		user.setUserRole(assignedRole.getRoleName());
 
@@ -122,6 +129,7 @@ public class UsersServiceImplementation implements UsersService {
 		registrationHistory.setUserId(user.getUserId());
 		registrationHistory.setRegisterDate(LocalDateTime.now());
 		registrationHistory.setRole(user.getUserRole());
+		registrationHistory.setCityName(user.getCityName());
 
 		registrationHistoryRepository.save(registrationHistory);
 		addRoleBasedLeavesToUsers(user.getUserId(), user.getUserRole());
@@ -172,7 +180,7 @@ public class UsersServiceImplementation implements UsersService {
 		existingUser.setAddress(updatedUser.getAddress());
 		existingUser.setGender(updatedUser.getGender());
 		existingUser.setCountryName(updatedUser.getCountryName());
-
+		existingUser.setCityName(updatedUser.getCityName());
 		usersRepository.save(existingUser);
 		return ResponseEntity.ok("User details updated successfully");
 	}
@@ -265,7 +273,7 @@ public class UsersServiceImplementation implements UsersService {
 		}
 
 		List<CountryCalendars> countryCalendarsList = countryCalendarsRepository
-				.findAllByCountryName(user.getCountryName());
+				.findAllByCityName(user.getCityName());
 
 		List<HolidayCalendar> holidaysCalendar = new ArrayList<>();
 		LocalDate currentLocalDate = LocalDate.now();
@@ -279,6 +287,7 @@ public class UsersServiceImplementation implements UsersService {
 				holidayCalendar.setHolidayName(cc.getHolidayName());
 				holidayCalendar.setHolidayDate(cc.getHolidayDate());
 				holidayCalendar.setHoilydayDay(cc.getHolidayDay());
+				holidayCalendar.setCityName(cc.getCityName());
 				holidaysCalendar.add(holidayCalendar);
 			}
 		}

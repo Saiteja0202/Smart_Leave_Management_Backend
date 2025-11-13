@@ -23,4 +23,7 @@ public interface CountryCalendarsRepository extends JpaRepository<CountryCalenda
     Optional<CountryCalendars> findExistingHolidayByCityAndDate(String cityName, LocalDate holidayDate);
     
     Optional<CountryCalendars> findByHolidayId(int holidayId);
+    
+    List<CountryCalendars> findByCityName(String cityName);
+    List<CountryCalendars> findAllByCityName(String cityName);
 }

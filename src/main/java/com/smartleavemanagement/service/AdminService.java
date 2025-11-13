@@ -32,4 +32,7 @@ public interface AdminService {
     ResponseEntity<String> updateCalendar(int adminId, List<Map<String, Object>> holidays, String token);
     
     ResponseEntity<?> updateSingleHoliday(int adminId,int holidayId,CountryCalendars countryCalendars,String token);
+    ResponseEntity<String> updateLeavePloicy(int adminId,int roleBasedLeaveId,RoleBasedLeaves roleBasedLeaves,String token);
+
 }
+
