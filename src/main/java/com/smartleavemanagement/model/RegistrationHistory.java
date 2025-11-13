@@ -27,9 +27,13 @@ public class RegistrationHistory {
 	private String email;
 	
 	private String role;
+	
+	private String cityName;
+	
+	
 
 	public RegistrationHistory(int registrationId, String firstName, String lastName, int userId,
-			LocalDateTime registerDate, String email) {
+			LocalDateTime registerDate, String email,String cityName) {
 		super();
 		this.registrationId = registrationId;
 		this.firstName = firstName;
@@ -37,6 +41,15 @@ public class RegistrationHistory {
 		this.userId = userId;
 		this.registerDate = registerDate;
 		this.email = email;
+		this.cityName=cityName;
+	}
+
+	public String getCityName() {
+		return cityName;
+	}
+
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
 	}
 
 	public int getRegistrationId() {

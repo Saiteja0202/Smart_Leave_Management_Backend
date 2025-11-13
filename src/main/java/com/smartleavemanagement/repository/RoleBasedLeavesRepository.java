@@ -10,5 +10,7 @@ public interface RoleBasedLeavesRepository extends JpaRepository<RoleBasedLeaves
 	
 	
 	Optional<RoleBasedLeaves> findByRole(String role);
+	
+	Optional<RoleBasedLeaves> findByRoleBasedLeaveId(int roleBasedLeaveId);
 
 }

@@ -196,4 +196,13 @@ public class AdminController {
     	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
         return adminService.updateSingleHoliday(adminId,holidayId, countryCalendars, token);
     }
+    
+    @PutMapping("/update-leave-policy/{adminId}/{roleBasedLeaveId}")
+    public ResponseEntity<String> updateLeavePloicy(@PathVariable int adminId, @PathVariable int roleBasedLeaveId,
+    		@RequestBody RoleBasedLeaves roleBasedLeaves,
+    		@RequestHeader("Authorization") String authHeader)
+    {
+    	String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    	return adminService.updateLeavePloicy(adminId, roleBasedLeaveId, roleBasedLeaves, token );
+    }
 }
