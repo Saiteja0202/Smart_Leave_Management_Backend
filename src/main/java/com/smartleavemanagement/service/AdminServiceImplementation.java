@@ -647,6 +647,9 @@ public class AdminServiceImplementation implements AdminService {
 		UserLeaveBalancedays userLeaveBalancedays = new UserLeaveBalancedays();
 		for(UsersLeaveBalance ulb : allUsersLeaveBalanceRepository)
 		{
+			Users user = ulb.getUser();
+			userLeaveBalancedays.setFirstName(user.getFirstName());
+			userLeaveBalancedays.setLastName(user.getLastName());.
 			userLeaveBalancedays.setCasualLeave(ulb.getCasualLeave());
 			userLeaveBalancedays.setEarnedLeave(ulb.getEarnedLeave());
 			userLeaveBalancedays.setMaternityLeave(ulb.getMaternityLeave());
@@ -822,6 +825,8 @@ public class AdminServiceImplementation implements AdminService {
 	    }
 		
 		RoleBasedLeaves existingRoleBasedLeaves = roleBasedLeavesRepository.findByRoleBasedLeaveId(roleBasedLeaveId).orElse(null);
+		
+		
 		
 		existingRoleBasedLeaves.setCasualLeave(roleBasedLeaves.getCasualLeave());
 		existingRoleBasedLeaves.setEarnedLeave(roleBasedLeaves.getEarnedLeave());
