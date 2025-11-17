@@ -151,6 +151,14 @@ public class UsersLeaveBalance {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+
+	@Override
+	public String toString() {
+		return "UsersLeaveBalance [userLeaveBalanceId=" + userLeaveBalanceId + ", role=" + role + ", sickLeave="
+				+ sickLeave + ", casualLeave=" + casualLeave + ", lossOfPay=" + lossOfPay + ", earnedLeave="
+				+ earnedLeave + ", paternityLeave=" + paternityLeave + ", maternityLeave=" + maternityLeave
+				+ ", totalLeaves=" + totalLeaves + ", user=" + user + "]";
+	}
 	
 	
 	

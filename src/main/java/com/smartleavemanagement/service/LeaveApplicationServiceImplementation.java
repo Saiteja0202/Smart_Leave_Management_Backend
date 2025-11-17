@@ -32,6 +32,8 @@ import com.smartleavemanagement.repository.UsersLeaveBalanceRepository;
 import com.smartleavemanagement.repository.UsersRepository;
 import com.smartleavemanagement.securityconfiguration.JwtUtil;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class LeaveApplicationServiceImplementation implements LeaveApplicationService {
 
@@ -359,33 +361,50 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		}
 	}
 
+
 	@Scheduled(cron = "0 0 0 31 12 *")
 	public void resetLeaveBalancesForNewYear() {
-		List<UsersLeaveBalance> allUserBalances = usersLeaveBalanceRepository.findAll();
+	    List<UsersLeaveBalance> allUserBalances = usersLeaveBalanceRepository.findAll();
 
-		for (UsersLeaveBalance userBalance : allUserBalances) {
-			String role = userBalance.getUser().getUserRole();
-			RoleBasedLeaves defaultPolicy = roleBasedLeavesRepository.findByRole(role).orElse(null);
+	    for (UsersLeaveBalance userBalance : allUserBalances) {
+	      
+	        Users user = userRepository.findById(userBalance.getUser().getUserId())
+	                                   .orElse(null);
 
-			if (defaultPolicy != null) {
-				float carryForwardEarned = userBalance.getEarnedLeave();
+	        if (user == null) {
+	            continue; 
+	        }
 
-				userBalance.setSickLeave(defaultPolicy.getSickLeave());
-				userBalance.setCasualLeave(defaultPolicy.getCasualLeave());
-				userBalance.setPaternityLeave(defaultPolicy.getPaternityLeave());
-				userBalance.setMaternityLeave(defaultPolicy.getMaternityLeave());
-				userBalance.setLossOfPay(defaultPolicy.getLossOfPay());
-				userBalance.setEarnedLeave(carryForwardEarned + defaultPolicy.getEarnedLeave());
-				float totalLeaves = defaultPolicy.getSickLeave() + defaultPolicy.getCasualLeave()
-						+ defaultPolicy.getPaternityLeave() + defaultPolicy.getMaternityLeave()
-						+ defaultPolicy.getLossOfPay() + (carryForwardEarned + defaultPolicy.getEarnedLeave());
-				userBalance.setTotalLeaves(totalLeaves);
-				usersLeaveBalanceRepository.save(userBalance);
-			}
-		}
+	        String role = user.getUserRole();
+	        System.out.println(role);
+	        RoleBasedLeaves defaultPolicy = roleBasedLeavesRepository.findByRole(role).orElse(null);
 
-		System.out.println("Leave balances reset for the new year.");
+	        if (defaultPolicy != null) {
+	            float carryForwardEarned = userBalance.getEarnedLeave();
+
+	            userBalance.setSickLeave(defaultPolicy.getSickLeave());
+	            userBalance.setCasualLeave(defaultPolicy.getCasualLeave());
+	            userBalance.setPaternityLeave(defaultPolicy.getPaternityLeave());
+	            userBalance.setMaternityLeave(defaultPolicy.getMaternityLeave());
+	            userBalance.setLossOfPay(defaultPolicy.getLossOfPay());
+	            userBalance.setEarnedLeave(carryForwardEarned + defaultPolicy.getEarnedLeave());
+	            userBalance.setRole(role);
+	            float totalLeaves = defaultPolicy.getSickLeave()
+	                    + defaultPolicy.getCasualLeave()
+	                    + defaultPolicy.getPaternityLeave()
+	                    + defaultPolicy.getMaternityLeave()
+	                    + defaultPolicy.getLossOfPay()
+	                    + (carryForwardEarned + defaultPolicy.getEarnedLeave());
+
+	            userBalance.setTotalLeaves(totalLeaves);
+
+	            usersLeaveBalanceRepository.save(userBalance);
+	        }
+	    }
+
+	    System.out.println("Leave balances reset for the new year.");
 	}
+
 
 	public ResponseEntity<?> getLeaveRequests(int userId) {
 
@@ -662,12 +681,11 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 		Users currentUser = balance.getUser();
 	    Users user = usersRepository.findById(currentUser.getUserId()).orElse(null);
 	    
-	    String firstName = user != null ? user.getFirstName() : "Unknown";
-	    String lastName = user != null ? user.getLastName() : "Unknown";
-
+	
 	    UserLeaveBalancedays dto = new UserLeaveBalancedays();
-	    dto.setFirstName(firstName);
-	    dto.setLastName(lastName);
+	    Users Actualuser = balance.getUser();
+	    dto.setFirstName(Actualuser.getFirstName());
+	    dto.setLastName(Actualuser.getLastName());
 	    dto.setSickLeave(balance.getSickLeave());
 	    dto.setCasualLeave(balance.getCasualLeave());
 	    dto.setLossOfPay(balance.getLossOfPay());

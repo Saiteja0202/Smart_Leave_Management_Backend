@@ -112,6 +112,14 @@ public class UserLeaveBalancedays {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+
+	@Override
+	public String toString() {
+		return "UserLeaveBalancedays [firstName=" + firstName + ", lastName=" + lastName + ", sickLeave=" + sickLeave
+				+ ", casualLeave=" + casualLeave + ", lossOfPay=" + lossOfPay + ", earnedLeave=" + earnedLeave
+				+ ", paternityLeave=" + paternityLeave + ", maternityLeave=" + maternityLeave + ", totalLeaves="
+				+ totalLeaves + "]";
+	}
 	
 	
 	
