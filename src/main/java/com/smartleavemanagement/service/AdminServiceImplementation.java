@@ -649,7 +649,7 @@ public class AdminServiceImplementation implements AdminService {
 		{
 			Users user = ulb.getUser();
 			userLeaveBalancedays.setFirstName(user.getFirstName());
-			userLeaveBalancedays.setLastName(user.getLastName());.
+			userLeaveBalancedays.setLastName(user.getLastName());
 			userLeaveBalancedays.setCasualLeave(ulb.getCasualLeave());
 			userLeaveBalancedays.setEarnedLeave(ulb.getEarnedLeave());
 			userLeaveBalancedays.setMaternityLeave(ulb.getMaternityLeave());
