@@ -1,9 +1,11 @@
 package com.smartleavemanagement.service;
 
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -642,11 +644,12 @@ public class AdminServiceImplementation implements AdminService {
 		}
 		
 		List<UsersLeaveBalance> allUsersLeaveBalanceRepository = usersLeaveBalanceRepository.findAll();
+
+		ArrayList<UserLeaveBalancedays> allUserLeaveBalancedays = new ArrayList<UserLeaveBalancedays>();
 		
-		ArrayList<UserLeaveBalancedays> allUserLeaveBalancedays = new ArrayList<>();
-		UserLeaveBalancedays userLeaveBalancedays = new UserLeaveBalancedays();
 		for(UsersLeaveBalance ulb : allUsersLeaveBalanceRepository)
 		{
+			UserLeaveBalancedays userLeaveBalancedays = new UserLeaveBalancedays();
 			Users user = ulb.getUser();
 			userLeaveBalancedays.setFirstName(user.getFirstName());
 			userLeaveBalancedays.setLastName(user.getLastName());
@@ -656,10 +659,11 @@ public class AdminServiceImplementation implements AdminService {
 			userLeaveBalancedays.setPaternityLeave(ulb.getPaternityLeave());
 			userLeaveBalancedays.setSickLeave(ulb.getSickLeave());
 			userLeaveBalancedays.setTotalLeaves(ulb.getTotalLeaves());
+			System.out.println(userLeaveBalancedays.toString());
 			allUserLeaveBalancedays.add(userLeaveBalancedays);
 		}
 		
-		
+		System.out.println("all user leave balance ______________--------___________"+allUsersLeaveBalanceRepository.toString());
 		return ResponseEntity.ok(allUserLeaveBalancedays);
 	}
 	
