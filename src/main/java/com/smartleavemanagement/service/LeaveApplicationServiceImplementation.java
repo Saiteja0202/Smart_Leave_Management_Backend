@@ -362,7 +362,7 @@ public class LeaveApplicationServiceImplementation implements LeaveApplicationSe
 	}
 
 
-	@Scheduled(cron = "0 0 0 31 12 *")
+	@Scheduled(cron = "0 10 0 31 12 *")
 	public void resetLeaveBalancesForNewYear() {
 	    List<UsersLeaveBalance> allUserBalances = usersLeaveBalanceRepository.findAll();
 
