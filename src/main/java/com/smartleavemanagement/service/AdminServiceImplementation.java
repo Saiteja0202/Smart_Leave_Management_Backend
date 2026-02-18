@@ -91,14 +91,13 @@ public class AdminServiceImplementation implements AdminService {
 
 	private final LeaveApplicationFormRepository leaveApplicationFormRepository;
 
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	private final PasswordEncoder passwordEncoder;
 
 	public AdminServiceImplementation(AdminsRepository adminsRepository, JwtUtil jwtUtil,
 			RegistrationHistoryRepository registrationHistoryRepository, RolesRepository rolesRepository,
 			CountryCalendarsRepository countryCalendarsRepository, RoleBasedLeavesRepository roleBasedLeavesRepository,
 			UsersRepository usersRepository, UsersLeaveBalanceRepository usersLeaveBalanceRepository,
-			LeaveApplicationFormRepository leaveApplicationFormRepository) {
+			LeaveApplicationFormRepository leaveApplicationFormRepository,PasswordEncoder passwordEncoder) {
 		this.adminsRepository = adminsRepository;
 		this.jwtUtil = jwtUtil;
 		this.leaveApplicationFormRepository = leaveApplicationFormRepository;
@@ -108,7 +107,7 @@ public class AdminServiceImplementation implements AdminService {
 		this.roleBasedLeavesRepository = roleBasedLeavesRepository;
 		this.usersRepository = usersRepository;
 		this.usersLeaveBalanceRepository = usersLeaveBalanceRepository;
-
+		this.passwordEncoder=passwordEncoder;
 	}
 
 	@Override
@@ -801,8 +800,10 @@ public class AdminServiceImplementation implements AdminService {
 		    existingCountryCalendars.setCalendarYear(countryCalendars.getCalendarYear());
 		    existingCountryCalendars.setCityName(countryCalendars.getCityName());
 		    existingCountryCalendars.setCountryName(countryCalendars.getCountryName());
+		    
 		    existingCountryCalendars.setHolidayDate(countryCalendars.getHolidayDate());
-		    existingCountryCalendars.setHolidayDay(countryCalendars.getHolidayDay());
+		    
+		    existingCountryCalendars.setHolidayDay(countryCalendars.getHolidayDate().getDayOfWeek());
 		    existingCountryCalendars.setHolidayName(countryCalendars.getHolidayName());
 		    
 		    countryCalendarsRepository.save(existingCountryCalendars);
